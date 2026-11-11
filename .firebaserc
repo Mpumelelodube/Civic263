@@ -1,0 +1,8 @@
+{
+  "projects": { "default": "demo-civic263" },
+  "targets": {
+    "demo-civic263": {
+      "hosting": { "public": ["demo-civic263-public"], "ops": ["demo-civic263-ops"] }
+    }
+  }
+}

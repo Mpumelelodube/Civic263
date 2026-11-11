@@ -1,0 +1,49 @@
+{
+  "name": "civic263",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zimbabwe's public municipal issue register",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mpumelelodube/Civic263.git"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "functions"
+  ],
+  "engines": {
+    "node": ">=22.13.0 <23 || >=24.3.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace @civic263/web",
+    "dev:ops": "npm run dev --workspace @civic263/ops",
+    "dev:mobile": "npm run start --workspace @civic263/mobile",
+    "android": "npm run android --workspace @civic263/mobile",
+    "ios": "npm run ios --workspace @civic263/mobile",
+    "build": "npm run build --workspace @civic263/web && npm run build --workspace @civic263/ops && npm run build --workspace @civic263/functions",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint apps packages functions --max-warnings 0",
+    "test": "node --experimental-strip-types --test packages/domain/src/domain.test.ts",
+    "check:scaffold": "node scripts/check-scaffold.mjs",
+    "check:mobile": "npm run check:dependencies --workspace @civic263/mobile",
+    "verify": "npm run check:scaffold && npm run test && npm run typecheck && npm run lint && npm run build && npm run check:mobile",
+    "emulators": "npm run build --workspace @civic263/functions && npx --yes firebase-tools@14.20.0 emulators:start --project demo-civic263",
+    "format": "prettier --write apps packages functions docs scripts *.json *.md *.mjs .github/workflows/*.yml"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^22.14.0",
+    "eslint": "^9.39.0",
+    "globals": "^16.5.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "8.59.3",
+    "prettier": "^3.6.2"
+  },
+  "overrides": {
+    "@firebase/app": "0.16.2",
+    "@firebase/app-compat": "0.5.18"
+  }
+}

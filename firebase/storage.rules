@@ -1,0 +1,7 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Enable only owner-scoped ticket-authorized uploads after intake is built.
+    match /{path=**} { allow read, write: if false; }
+  }
+}

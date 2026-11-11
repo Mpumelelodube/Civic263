@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Civic263",
+    "slug": "civic263",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "civic263",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "co.zw.civic263.mobile"
+    },
+    "android": {
+      "predictiveBackGestureEnabled": false,
+      "package": "co.zw.civic263.mobile"
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#f2f4f7"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

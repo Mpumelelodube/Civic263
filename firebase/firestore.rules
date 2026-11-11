@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsReport(report) {
+      return request.auth != null && report.data.ownerUid == request.auth.uid;
+    }
+    match /reports/{reportId} {
+      allow read: if ownsReport(resource);
+      allow write: if false;
+      match /updates/{updateId} {
+        allow read: if ownsReport(get(/databases/$(database)/documents/reports/$(reportId)));
+        allow write: if false;
+      }
+    }
+    // Public data is served by bounded, allowlisted APIs. Staff permissions and
+    // command authorization will be implemented server-side before enabling them.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
