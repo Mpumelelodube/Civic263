@@ -3,26 +3,35 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIES,
   HANDOFF_LABELS,
-  WORKFLOW_LABELS,
+  workflowLabel,
   categoryLabel,
   isOpenIncident,
 } from '@civic263/domain';
-import { DEMO_AS_OF, DEMO_INCIDENTS, ageInDays } from '../data/demo-incidents';
-import { SchematicMap } from '../components/schematic-map';
-import { downloadDemoCsv } from '../lib/download-csv';
+import {
+  usePublicRegister,
+  evidenceAge as ageInDays,
+  publicPhotoUrl,
+} from '../lib/public-register';
+import { PublicMap } from '../components/public-map';
+import { downloadPublicCsv } from '../lib/download-csv';
 
 export function ExplorePage() {
+  const { incidents, asOf, loading, error, nextCursor } = usePublicRegister();
   const [params, setParams] = useSearchParams();
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? 'all';
   const progress = params.get('progress') ?? 'all';
-  const [selectedId, setSelectedId] = useState(DEMO_INCIDENTS[0]?.id);
+  const [selectedId, setSelectedId] = useState(incidents[0]?.id);
   const [showMap, setShowMap] = useState(false);
-  const filtered = DEMO_INCIDENTS.filter(
+  const filtered = incidents.filter(
     (item) =>
       (category === 'all' || item.categoryId === category) &&
       (progress === 'all' ||
-        (progress === 'open' ? isOpenIncident(item) : !isOpenIncident(item))) &&
+        (progress === 'open'
+          ? isOpenIncident(item)
+          : progress === 'pending'
+            ? item.workflowStatus === 'resolution-pending'
+            : item.workflowStatus === 'resolved')) &&
       `${item.title} ${item.area} ${item.reference}`.toLowerCase().includes(query.toLowerCase()),
   );
   const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0];
@@ -40,7 +49,7 @@ export function ExplorePage() {
     <>
       <header className="page-header">
         <div>
-          <h1>Harare issue register</h1>
+          <h1>Public issue register</h1>
           <p className="muted">Reported faults, reviewed evidence and what happened next.</p>
         </div>
         <Link className="primary" to="/data">
@@ -54,7 +63,7 @@ export function ExplorePage() {
             type="search"
             value={query}
             onChange={(event) => changeFilter('q', event.target.value)}
-            placeholder="Search the demonstration register"
+            placeholder="Search published reports"
           />
         </label>
         <label>
@@ -79,7 +88,8 @@ export function ExplorePage() {
           >
             <option value="all">All issues</option>
             <option value="open">Open issues</option>
-            <option value="resolved">Resolution recorded</option>
+            <option value="pending">Awaiting community confirmation</option>
+            <option value="resolved">Resolved reports</option>
           </select>
         </label>
       </div>
@@ -87,7 +97,7 @@ export function ExplorePage() {
         <strong>
           {openCount} open issue{openCount === 1 ? '' : 's'}
         </strong>
-        <span>{filtered.length} published examples in this view</span>
+        <span>{filtered.length} published reports loaded in this view</span>
       </div>
       <div className="view-switch" aria-label="Explorer view">
         <button aria-pressed={!showMap} onClick={() => setShowMap(false)}>
@@ -101,7 +111,7 @@ export function ExplorePage() {
         <section className="panel register-panel">
           <div className="panel-head">
             <h2>Reviewed incidents</h2>
-            <span>Fictional examples</span>
+            <span>Resident observations</span>
           </div>
           <div className="issue-list">
             {filtered.length ? (
@@ -121,34 +131,44 @@ export function ExplorePage() {
                     </span>
                   </span>
                   <span className="evidence-line">
-                    Evidence: {ageInDays(item.lastApprovedEvidenceAt)} /{' '}
-                    {WORKFLOW_LABELS[item.workflowStatus]}
+                    Evidence: {ageInDays(item.lastApprovedEvidenceAt)} / {workflowLabel(item)}
                   </span>
                 </button>
               ))
             ) : (
               <p className="empty">
-                No reviewed examples match these filters. This does not establish that there are no
-                faults.
+                {loading
+                  ? 'Loading published reports...'
+                  : error
+                    ? 'Reports could not be loaded. Use Retry above.'
+                    : 'No published reports match this view. This does not establish that there are no faults.'}
               </p>
             )}
           </div>
         </section>
         <section className="panel map-panel" aria-label="Selected issue and map">
-          <SchematicMap incidents={filtered} selectedId={selected?.id} onSelect={setSelectedId} />
+          <PublicMap incidents={filtered} selectedId={selected?.id} onSelect={setSelectedId} />
           {selected ? (
             <div className="selected-detail">
               <h2>{selected.title}</h2>
+              {selected.photoCount ? (
+                <img
+                  className="report-cover"
+                  src={publicPhotoUrl(selected.id, 0)}
+                  alt="Approved photo of the reported issue"
+                  loading="lazy"
+                />
+              ) : null}
               <p>
                 {selected.reference} / {selected.area}
               </p>
               <div className="evidence-strip">
-                <span>{WORKFLOW_LABELS[selected.workflowStatus]}</span>
+                <span>{workflowLabel(selected)}</span>
                 <span>First report: {ageInDays(selected.firstAcceptedAt)}</span>
                 <span>Evidence: {ageInDays(selected.lastApprovedEvidenceAt)}</span>
               </div>
               <p>{HANDOFF_LABELS[selected.handoffStatus]}</p>
-              <Link className="text-link" to={`/issues/${selected.reference}`}>
+              <Link className="text-link" to={`/issues/${selected.id}`}>
                 Read evidence and history
               </Link>
             </div>
@@ -161,8 +181,8 @@ export function ExplorePage() {
         <section className="panel content-panel">
           <h2>What this record covers</h2>
           <p className="muted small">
-            Eight fictional examples demonstrate the product. Harare is illustrative; the pilot
-            municipality is not selected.
+            Published resident observations from the loaded register. Text and photos pass automatic
+            privacy and relevance checks; service responsibility remains unassigned until confirmed.
           </p>
           <Link className="text-link" to="/methodology">
             Understand the evidence
@@ -171,10 +191,19 @@ export function ExplorePage() {
         <section className="panel content-panel">
           <h2>Reuse the public record</h2>
           <p className="muted small">
-            This sample download contains the {filtered.length} records in the current view, with
-            the fixed demonstration as-of time.
+            {filtered.length} loaded records match this view.{' '}
+            {nextCursor
+              ? 'Load more above to include older reports.'
+              : 'All currently loaded records are included.'}
           </p>
-          <button onClick={() => downloadDemoCsv(filtered, DEMO_AS_OF)}>Download sample CSV</button>
+          <button
+            disabled={!asOf}
+            onClick={() => {
+              if (asOf) downloadPublicCsv(filtered, asOf);
+            }}
+          >
+            Download this view as CSV
+          </button>
         </section>
       </div>
     </>

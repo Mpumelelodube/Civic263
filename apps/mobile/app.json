@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "civic263",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "co.zw.civic263.mobile"
     },
@@ -18,16 +18,61 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/with-firebase-modular-headers.cjs",
+      "./plugins/with-background-work-keep.cjs",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f2f4f7"
+          "backgroundColor": "#edf2f5",
+          "dark": {
+            "backgroundColor": "#172637"
+          }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Use your location to choose where a Civic263 report belongs when you request it.",
+          "locationAlwaysPermission": false,
+          "locationAlwaysAndWhenInUsePermission": "Allow Civic263 to find nearby community review invitations when the app is not open. You can pause reminders in Community preferences.",
+          "motionUsagePermission": false,
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose photos to attach to your Civic263 report.",
+          "cameraPermission": "Take photos to show the issue in your Civic263 report.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "community-updates",
+          "color": "#197f7a"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "fd226fa0-a289-44ce-9781-11537012ee9b"
+      }
+    },
+    "owner": "mpumelelo_dube",
+    "icon": "./assets/icon.png"
   }
 }

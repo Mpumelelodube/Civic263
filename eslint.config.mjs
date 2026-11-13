@@ -10,6 +10,8 @@ export default tseslint.config(
       '**/.expo/**',
       '**/expo-env.d.ts',
       'functions/lib/**',
+      '**/android/**',
+      '**/ios/**',
     ],
   },
   js.configs.recommended,
@@ -17,6 +19,10 @@ export default tseslint.config(
   {
     files: ['**/*.{js,mjs,cjs,ts,tsx}'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  {
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     files: ['**/*.{ts,tsx}'],

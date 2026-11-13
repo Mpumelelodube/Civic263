@@ -1,0 +1,11 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'co.zw.civic263'
+version = '0.1.0'
+android { namespace 'co.zw.civic263.appcheck' }
+dependencies {
+  implementation platform('com.google.firebase:firebase-bom:35.2.0')
+  implementation 'com.google.firebase:firebase-appcheck-playintegrity'
+}

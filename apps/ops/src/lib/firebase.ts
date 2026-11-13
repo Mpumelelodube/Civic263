@@ -9,7 +9,19 @@ export function getStaffAuth() {
   if (!apiKey || !authDomain || !projectId || !appId) return null;
   const existing = getApps().find((app) => app.name === 'civic263-ops');
   return getAuth(
-    existing ?? initializeApp({ apiKey, authDomain, projectId, appId }, 'civic263-ops'),
+    existing ??
+      initializeApp(
+        {
+          apiKey,
+          authDomain,
+          projectId,
+          appId,
+          storageBucket: (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string | undefined) ?? '',
+          messagingSenderId:
+            (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string | undefined) ?? '',
+        },
+        'civic263-ops',
+      ),
   );
 }
 

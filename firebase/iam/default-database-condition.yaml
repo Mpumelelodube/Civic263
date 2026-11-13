@@ -1,0 +1,3 @@
+title: civic263-default-database
+description: Only the Civic263 default Firestore database.
+expression: resource.name == "projects/civic263-df6ec/databases/(default)" || resource.name.startsWith("projects/civic263-df6ec/databases/(default)/")

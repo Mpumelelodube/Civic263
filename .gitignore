@@ -15,11 +15,14 @@ functions/lib/
 **/.env
 **/.env.*
 !**/.env.example
-google-services.json
+**/.secret.local
+google-services*.json
 GoogleService-Info.plist
 *service-account*.json
 *.jks
 *.keystore
+credentials.json
+*.mobileprovision
 *.p8
 *.p12
 coverage/
@@ -27,3 +30,9 @@ coverage/
 .DS_Store
 .taste-skill/inspect/
 .local/
+
+# Hand-written local Expo module sources.
+!apps/mobile/modules/civic-app-check/android/
+!apps/mobile/modules/civic-app-check/ios/
+apps/mobile/modules/civic-app-check/android/build/
+apps/mobile/modules/civic-app-check/android/.cxx/

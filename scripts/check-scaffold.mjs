@@ -24,9 +24,11 @@ for (const file of [
 ])
   await json(file);
 for (const file of [
-  'apps/mobile/src/app/index.tsx',
-  'apps/mobile/src/app/report.tsx',
-  'apps/mobile/src/app/my-reports.tsx',
+  'apps/mobile/src/app/(tabs)/_layout.tsx',
+  'apps/mobile/src/app/(tabs)/index.tsx',
+  'apps/mobile/src/app/(tabs)/report.tsx',
+  'apps/mobile/src/app/(tabs)/my-reports.tsx',
+  'apps/mobile/src/app/report-details.tsx',
   'apps/web/src/main.tsx',
   'apps/ops/src/main.tsx',
   'firebase/firestore.rules',

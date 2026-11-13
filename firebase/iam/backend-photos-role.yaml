@@ -1,0 +1,7 @@
+title: Civic263 report photos
+description: Read and write report photos; delete is required to overwrite an idempotent retry object.
+stage: GA
+includedPermissions:
+  - storage.objects.get
+  - storage.objects.create
+  - storage.objects.delete

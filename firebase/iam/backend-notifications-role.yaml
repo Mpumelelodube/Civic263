@@ -1,0 +1,5 @@
+title: Civic263 notification sender
+description: Send Civic263 FCM updates; no topic administration or broader Firebase access.
+stage: GA
+includedPermissions:
+  - cloudmessaging.messages.create

@@ -1,0 +1,3 @@
+title: civic263-report-photo-paths
+description: Only report originals and approved incident derivatives in this bucket.
+expression: resource.name.startsWith("projects/_/buckets/civic263-df6ec.firebasestorage.app/objects/private/reports/") || resource.name.startsWith("projects/_/buckets/civic263-df6ec.firebasestorage.app/objects/public/incidents/")

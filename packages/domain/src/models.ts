@@ -1,4 +1,16 @@
 import type { CategoryId } from './categories.ts';
+import type { SubmissionReceipt } from './report-submission.ts';
+import type { ReportLocation } from './locations.ts';
+import type { ReportResolution } from './report-resolution.ts';
+import type { CommunityResolution } from './community.ts';
+
+export interface DraftPhoto {
+  id: string;
+  uri: string;
+  width: number;
+  height: number;
+  bytes: number;
+}
 
 export type ModerationStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
 export type WorkflowStatus =
@@ -6,6 +18,7 @@ export type WorkflowStatus =
   | 'acknowledged'
   | 'assigned'
   | 'in-progress'
+  | 'resolution-pending'
   | 'resolved'
   | 'closed'
   | 'out-of-scope'
@@ -22,6 +35,10 @@ export interface ReportDraft {
   createdAt: string;
   updatedAt: string;
   state: 'draft';
+  photos?: DraftPhoto[];
+  location?: ReportLocation;
+  submissionStartedAt?: string;
+  receipt?: SubmissionReceipt;
 }
 
 export interface PublicIncident {
@@ -40,6 +57,10 @@ export interface PublicIncident {
   location: IssueLocation | null;
   locationPrecision: 'exact' | 'approximate' | 'hidden';
   publicationVersion: number;
+  photoCount?: number;
+  reviewMethod?: 'automated';
+  resolution?: ReportResolution;
+  communityResolution?: CommunityResolution;
 }
 
 export interface IncidentRecord extends PublicIncident {
@@ -60,6 +81,7 @@ export const WORKFLOW_LABELS: Record<WorkflowStatus, string> = {
   acknowledged: 'Acknowledged by platform',
   assigned: 'Assigned',
   'in-progress': 'In progress',
+  'resolution-pending': 'Fix reported — awaiting community confirmation',
   resolved: 'Resolution recorded',
   closed: 'Closed',
   'out-of-scope': 'Outside service scope',

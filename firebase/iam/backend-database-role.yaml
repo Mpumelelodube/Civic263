@@ -1,0 +1,11 @@
+title: Civic263 report database commands
+description: Entity reads, validated server writes and transactions in the default database.
+stage: GA
+includedPermissions:
+  - datastore.databases.get
+  - datastore.databases.getMetadata
+  - datastore.entities.get
+  - datastore.entities.list
+  - datastore.entities.create
+  - datastore.entities.update
+  - datastore.entities.delete

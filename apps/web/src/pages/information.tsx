@@ -1,8 +1,9 @@
-import { isOpenIncident, categoryLabel, WORKFLOW_LABELS } from '@civic263/domain';
-import { DEMO_AS_OF, DEMO_INCIDENTS } from '../data/demo-incidents';
-import { downloadDemoCsv } from '../lib/download-csv';
+import { isOpenIncident, categoryLabel, workflowLabel } from '@civic263/domain';
+import { usePublicRegister } from '../lib/public-register';
+import { downloadPublicCsv } from '../lib/download-csv';
 
 export function DataPage() {
+  const { incidents, asOf, nextCursor } = usePublicRegister();
   return (
     <>
       <header className="page-header">
@@ -12,13 +13,22 @@ export function DataPage() {
         </div>
       </header>
       <section className="panel content-panel">
-        <h2>Fictional sample dataset</h2>
+        <h2>Published resident observations</h2>
         <p>
-          Eight invented records demonstrate the export format. Snapshot as of {DEMO_AS_OF}. This is
-          not a live Zimbabwe service-delivery dataset.
+          {incidents.length} published reports loaded.{' '}
+          {nextCursor
+            ? 'Load more above to include older records.'
+            : 'This view contains the loaded snapshot.'}{' '}
+          Private resident identities and original photos are excluded.
         </p>
-        <button className="primary" onClick={() => downloadDemoCsv(DEMO_INCIDENTS, DEMO_AS_OF)}>
-          Download fictional sample CSV
+        <button
+          className="primary"
+          disabled={!asOf}
+          onClick={() => {
+            if (asOf) downloadPublicCsv(incidents, asOf);
+          }}
+        >
+          Download loaded public records
         </button>
         <div className="table-wrap">
           <table>
@@ -30,7 +40,7 @@ export function DataPage() {
               </tr>
             </thead>
             <tbody>
-              {DEMO_INCIDENTS.map((item) => (
+              {incidents.map((item) => (
                 <tr key={item.id}>
                   <td>
                     {item.title}
@@ -38,15 +48,16 @@ export function DataPage() {
                     <span className="small muted">{item.reference}</span>
                   </td>
                   <td>{categoryLabel(item.categoryId)}</td>
-                  <td>{WORKFLOW_LABELS[item.workflowStatus]}</td>
+                  <td>{workflowLabel(item)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p className="small muted">
-          Live downloads will require reviewed publication, snapshot versioning, coverage notes and
-          agreed metadata reuse terms. Private identities and original media will remain excluded.
+          Downloads contain the public fields loaded in this browser, with their snapshot time. They
+          describe participation in Civic263; they are not a complete survey of faults or council
+          performance. Photos are not included in CSV exports.
         </p>
       </section>
     </>
@@ -54,7 +65,8 @@ export function DataPage() {
 }
 
 export function AreasPage() {
-  const areas = [...new Set(DEMO_INCIDENTS.map((item) => item.area))].sort();
+  const { incidents } = usePublicRegister();
+  const areas = [...new Set(incidents.map((item) => item.area))].sort();
   return (
     <>
       <header className="page-header">
@@ -66,16 +78,17 @@ export function AreasPage() {
         </div>
       </header>
       <section className="panel content-panel">
-        <h2>Demonstration coverage</h2>
+        <h2>Coverage of loaded reports</h2>
         <p>
-          Each area below contains a fictional example. No-report areas are not shown as fault-free.
+          Counts use the published reports currently loaded above. Areas without reports are not
+          shown as fault-free.
         </p>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Area</th>
-                <th className="numeric">Open examples</th>
+                <th className="numeric">Open reports</th>
                 <th className="numeric">Resolution recorded</th>
               </tr>
             </thead>
@@ -84,16 +97,10 @@ export function AreasPage() {
                 <tr key={area}>
                   <td>{area}</td>
                   <td className="numeric">
-                    {
-                      DEMO_INCIDENTS.filter((item) => item.area === area && isOpenIncident(item))
-                        .length
-                    }
+                    {incidents.filter((item) => item.area === area && isOpenIncident(item)).length}
                   </td>
                   <td className="numeric">
-                    {
-                      DEMO_INCIDENTS.filter((item) => item.area === area && !isOpenIncident(item))
-                        .length
-                    }
+                    {incidents.filter((item) => item.area === area && !isOpenIncident(item)).length}
                   </td>
                 </tr>
               ))}
@@ -117,16 +124,24 @@ export function MethodologyPage() {
       <article className="panel content-panel">
         <h2>Reports and incidents</h2>
         <p>
-          A report is one resident's submission. An incident is the real-world problem that
-          operators manage. Several reports may support one public incident.
+          A report is one resident's submission. An incident is the public record of the reported
+          problem. Residents raise issues and record when their own reports have been resolved.
         </p>
         <h2>Review and acknowledgement</h2>
         <p>
-          Review determines whether information is suitable for publication. It does not establish
-          that a field inspection occurred. Sending information to a responsible service and
-          receiving its acknowledgement are separate evidenced events.
+          Automated text and photo checks determine whether an observation is suitable for
+          publication. Photos with detected faces, readable text or unsafe content stay private.
+          Uncertain reports also stay private. Automated checks can make mistakes; publication is
+          not independent verification. It does not establish that a field inspection occurred.
+          Sending information to a responsible service and receiving its acknowledgement are
+          separate evidenced events.
         </p>
         <h2>Freshness and resolution</h2>
+        <p>
+          Residents raise issues and the original reporter can mark their report resolved. Its
+          active map pin is removed while the record and approved photos stay available. A
+          resolution labelled "Resolved by reporter" records that resident's observation.
+        </p>
         <p>
           The latest approved observation determines evidence freshness. An administrative edit does
           not refresh it. Resolution labels must distinguish a resident observation, an authority
@@ -161,13 +176,13 @@ export function AboutPage() {
           by an Expo resident app and a private operations dashboard.
         </p>
         <p>
-          The resident app currently saves device-local drafts. Live reporting, staff moderation,
-          Google Maps and service handoffs will be connected in subsequent phases.
+          The resident app submits reports and compressed photos privately. Automatic publication
+          checks create a separate public record for eligible observations. Handoffs to responsible
+          services are recorded separately when they occur.
         </p>
         <p>
           The platform is independent unless a formal municipal partnership is established. No
-          authority partnership, monitoring hours or repair service is represented by this
-          demonstration.
+          authority partnership, monitoring hours or repair service is represented by this platform.
         </p>
       </article>
     </>

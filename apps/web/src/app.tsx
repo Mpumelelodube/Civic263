@@ -3,6 +3,7 @@ import { Brand, Notice } from '@civic263/web-ui';
 import { ExplorePage } from './pages/explore';
 import { IncidentDetailPage } from './pages/incident-detail';
 import { AboutPage, AreasPage, DataPage, MethodologyPage } from './pages/information';
+import { RegisterState } from './lib/public-register';
 
 export function App() {
   return (
@@ -37,9 +38,10 @@ export function App() {
         </aside>
         <main id="main">
           <Notice>
-            <strong>Scaffold preview.</strong> All incidents, evidence, figures and map positions
-            are fictional. No live reports are loaded.
+            <strong>Resident observations.</strong> Reports and public photos pass automatic
+            publication checks. Publication does not confirm an inspection or municipal response.
           </Notice>
+          <RegisterState />
           <Routes>
             <Route path="/" element={<ExplorePage />} />
             <Route path="/areas" element={<AreasPage />} />

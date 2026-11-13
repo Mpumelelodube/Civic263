@@ -26,12 +26,17 @@
     "build": "npm run build --workspace @civic263/web && npm run build --workspace @civic263/ops && npm run build --workspace @civic263/functions",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint apps packages functions --max-warnings 0",
-    "test": "node --experimental-strip-types --test packages/domain/src/domain.test.ts",
+    "test": "node --experimental-strip-types --test packages/domain/src/domain.test.ts packages/domain/src/report-resolution.test.ts packages/domain/src/community.test.ts packages/domain/src/review-reminders.test.ts scripts/read-saved-drafts.test.ts scripts/mobile-motion.test.ts scripts/service-colors.test.ts functions/src/report-intake.test.ts functions/src/place-lookup.test.ts functions/src/automatic-review.test.ts scripts/native-attestation.test.ts packages/domain/src/field-test.test.ts",
     "check:scaffold": "node scripts/check-scaffold.mjs",
     "check:mobile": "npm run check:dependencies --workspace @civic263/mobile",
     "verify": "npm run check:scaffold && npm run test && npm run typecheck && npm run lint && npm run build && npm run check:mobile",
-    "emulators": "npm run build --workspace @civic263/functions && npx --yes firebase-tools@14.20.0 emulators:start --project demo-civic263",
-    "format": "prettier --write apps packages functions docs scripts *.json *.md *.mjs .github/workflows/*.yml"
+    "emulators": "npm run build --workspace @civic263/functions && npx --yes firebase-tools@15.35.0 emulators:start --project demo-civic263",
+    "test:intake": "node scripts/test-report-intake.mjs",
+    "test:community": "node --experimental-strip-types scripts/test-community.mjs",
+    "test:publication": "node --experimental-strip-types scripts/test-publication.mjs",
+    "format": "prettier --write apps packages functions docs scripts *.json *.md *.mjs .github/workflows/*.yml",
+    "test:identity": "node --experimental-strip-types scripts/test-identity-recovery.mjs",
+    "test:field-access": "npm run build --workspace @civic263/functions && node scripts/test-field-access.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

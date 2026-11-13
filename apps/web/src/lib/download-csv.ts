@@ -1,6 +1,6 @@
 import { csvCell, type PublicIncident } from '@civic263/domain';
 
-export function downloadDemoCsv(incidents: PublicIncident[], asOf: string): void {
+export function downloadPublicCsv(incidents: PublicIncident[], asOf: string): void {
   const columns = [
     'dataset',
     'reference',
@@ -11,10 +11,15 @@ export function downloadDemoCsv(incidents: PublicIncident[], asOf: string): void
     'handoff',
     'first_accepted_at',
     'last_evidence_at',
+    'resolution_source',
+    'resolved_at',
+    'community_status',
+    'fix_reported_at',
+    'community_reviewed_at',
     'as_of',
   ];
   const rows = incidents.map((item) => [
-    'FICTIONAL DEMO DATA',
+    'Civic263 public resident observations',
     item.reference,
     item.title,
     item.categoryId,
@@ -23,13 +28,18 @@ export function downloadDemoCsv(incidents: PublicIncident[], asOf: string): void
     item.handoffStatus,
     item.firstAcceptedAt,
     item.lastApprovedEvidenceAt,
+    item.resolution?.source ?? '',
+    item.resolution?.resolvedAt ?? '',
+    item.communityResolution?.status ?? '',
+    item.communityResolution?.reportedFixedAt ?? '',
+    item.communityResolution?.reviewedAt ?? '',
     asOf,
   ]);
   const csv = [columns, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = 'Civic263_FICTIONAL_demo.csv';
+  anchor.download = 'Civic263_public_records.csv';
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

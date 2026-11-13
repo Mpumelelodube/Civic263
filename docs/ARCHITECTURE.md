@@ -6,7 +6,7 @@ The public site and ops use Vite. Mobile uses Expo Router under src/app with scr
 
 The shared domain package contains pure TypeScript only. It has no Firebase credentials, React dependency or native module. Browser components/CSS live in @civic263/web-ui, which mobile never imports.
 
-Functions is an independent deployable package with its own production dependencies. It currently exports only a health function. Do not add a runtime file: dependency on a parent workspace to Functions: Firebase does not upload parent folders. Bundle shared domain code into a future Functions build or publish a versioned deployable domain package before importing it at server runtime.
+Functions is an independent deployable package with its own production dependencies. Its esbuild step bundles shared domain code into the deployment artifact; no runtime dependency on parent workspace paths is uploaded. It implements private report/photo intake, owner reads, Places lookup, automatic review, a public projection/photo API and health. See [Firebase backend](FIREBASE_BACKEND.md) for the current deployed architecture and release gates.
 
 Reports are private resident submissions; incidents are canonical managed issues. Moderation, workflow and publication are independent. Public data uses an explicit field projection and a bounded server API. Business writes, role checks, idempotency, publication and outbox work belong on the server.
 

@@ -1,0 +1,7 @@
+title: Civic263 automatic review calls
+description: Invoke the review model, charge Civic263 APIs and receive its Firestore review events.
+stage: GA
+includedPermissions:
+  - aiplatform.endpoints.predict
+  - serviceusage.services.use
+  - eventarc.events.receiveEvent
