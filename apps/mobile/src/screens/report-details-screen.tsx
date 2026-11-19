@@ -10,8 +10,6 @@ import {
   REVIEW_REASONS,
   workflowLabel,
   type FieldCheckKind,
-  type PublicIncident,
-  type ResidentReportDetail,
 } from '@civic263/domain';
 import { AppText } from '@/components/app-text';
 import { ActionButton, IconBadge } from '@/components/action-button';
@@ -26,15 +24,14 @@ import { CommunityActions } from '@/components/community-actions';
 import { CommunityHistory } from '@/components/community-history';
 import { useTheme } from '@/theme';
 import { useAppReducedMotion } from '@/hooks/use-reduced-motion';
+import { loadReportDetail, type ReportDetail } from '@/services/report-detail';
 
-type Detail =
-  { kind: 'owner'; item: ResidentReportDetail } | { kind: 'public'; item: PublicIncident };
 export function ReportDetailsScreen() {
   const { id, view } = useLocalSearchParams<{ id?: string; view?: 'owner' | 'public' }>();
   const theme = useTheme();
   const reduced = useAppReducedMotion();
   const insets = useSafeAreaInsets();
-  const [detail, setDetail] = useState<Detail | null>(null);
+  const [detail, setDetail] = useState<ReportDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [image, setImage] = useState<string | null>(null);
@@ -57,10 +54,12 @@ export function ReportDetailsScreen() {
         clearTimeout(timeout);
         return;
       }
-      const load: Promise<Detail> =
-        view === 'owner'
-          ? readMyReport(id).then((item) => ({ kind: 'owner', item }))
-          : readPublicReport(id, abort.signal).then((item) => ({ kind: 'public', item }));
+      const load = loadReportDetail(
+        view,
+        () => readMyReport(id),
+        () => readPublicReport(id, abort.signal),
+        abort.signal,
+      );
       void load
         .then((item) => {
           if (active)

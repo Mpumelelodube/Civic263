@@ -1,4 +1,5 @@
 import { httpsCallable } from 'firebase/functions';
+import { PublicReportNotFoundError } from './report-detail';
 import type {
   PublicIncident,
   PublicIncidentResponse,
@@ -73,12 +74,8 @@ export async function readPublicReport(id: string, signal?: AbortSignal): Promis
     signal: signal ?? null,
     headers: { 'Cache-Control': 'no-cache' },
   });
-  if (!response.ok)
-    throw new Error(
-      response.status === 404
-        ? 'Published report not found.'
-        : 'Could not load this report. Please retry.',
-    );
+  if (response.status === 404) throw new PublicReportNotFoundError('Published report not found.');
+  if (!response.ok) throw new Error('Could not load this report. Please retry.');
   return response.json() as Promise<PublicIncident>;
 }
 
