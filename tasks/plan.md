@@ -1,6 +1,6 @@
 # Civic263 delivery plan
 
-Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Deployment/device evidence is from 13 November; this tracking refresh does not claim a new cloud or device check.
+Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Build/device evidence is from 13 November; Firebase production APNs configuration was completed and verified on 19 November.
 
 Civic263 is at controlled native release acceptance. Reporting, private photos, automatic publication review, the live public portal and community resolution are implemented. Android standalone acceptance has passed; the iOS archive is built. Public rollout has not passed its remaining device and operational gates.
 
@@ -23,18 +23,18 @@ Use [todo.md](todo.md) as the open task list. [Implementation status](../docs/IM
 
 ## Next tasks, in order
 
-### R01 - Finish Firebase APNs configuration
+### R01 - Finish Firebase APNs configuration - complete
 
-Configure Firebase Cloud Messaging for the existing iOS app using approved key `8LFLW7W3U9`, Apple team `25L4M5VTCR`. The key is already assigned in EAS. Chrome was ready, but automation stopped because the current URL could not be verified; the Firebase upload was not completed.
+Firebase Cloud Messaging now shows production APNs key `8LFLW7W3U9`, Apple team `25L4M5VTCR`, for `co.zw.civic263.mobile`. The saved configuration was verified after a console reload on 19 November. The existing EAS assignment and other apps/keys were preserved. The development APNs slot remains unconfigured; the signed TestFlight archive uses production APNs.
 
 - Acceptance: the correct Firebase iOS client shows the intended key/team; the private key stays out of source/logs; existing apps and keys are preserved.
 - Verification: inspect the saved Firebase configuration. Actual iPhone delivery is R03.
-- Dependency: a browser path that can verify its URL, or the owner's manual console upload. Approval for this exact shared key already exists.
+- Evidence: the correct Firebase project/client and saved key/team were inspected through Chrome. Private key material remains in an ignored, access-restricted signing folder.
 - Likely files: `docs/NATIVE_RELEASE.md`, `docs/ACCEPTANCE_TESTING.md`. Scope: small configuration task.
 
 ### R02 - Establish TestFlight access for the finished archive
 
-Identify the App Store Connect app and a credential with access to `co.zw.civic263.mobile`, then submit the identified build for private testing. The read-only CLI status check could not find the app using credentials available to this EAS project; that does not prove the app is absent from the Apple account.
+App Store Connect app `6836809635` is prepared for `co.zw.civic263.mobile`. Existing submission key `GR74QN3BR3` (EAS) was explicitly approved and assigned to Civic263. Build 4 was queued as EAS submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` on 19 November. The owner's account has access to the internal `Team (Expo)` group. Apple processing and actual build availability remain unverified; no other testers or public distribution were requested.
 
 - Acceptance: record the App Store Connect app ID and approved credential reference; submit the intended version/build; verify Apple processing and availability to the intended tester.
 - Verification: EAS submission status plus App Store Connect/TestFlight state, not a queued-job message alone.

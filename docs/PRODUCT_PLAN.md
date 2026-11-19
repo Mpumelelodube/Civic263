@@ -10,9 +10,9 @@
 
 ## Current delivery checkpoint
 
-The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Deployment/device evidence is from 13 November; this revision refreshes tracking, not cloud or hardware acceptance. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
+The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/device evidence is from 13 November; Firebase production APNs configuration was completed and verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
 
-Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Signed iOS 0.1.0 build 4 is ready, with physical iPhone acceptance still pending. Immediate work is Firebase APNs upload, TestFlight app/credential access, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
+Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Signed iOS 0.1.0 build 4 is ready, production APNs and App Store Connect access are configured, and the TestFlight upload is queued. Physical iPhone acceptance is still pending. Immediate work is Apple processing/owner availability, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
 
 The original 9 November proposal below still includes future functionality. Staff operations, duplicate merge, official handoffs, account deletion/withdrawal, full area analytics and public snapshot exports are not completed features. The approved public-led model and revised roadmap supersede earlier staff-only review and mandatory-device-only tracking assumptions.
 

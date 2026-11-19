@@ -1,6 +1,6 @@
-# Native release checkpoint - 13 November 2026
+# Native release checkpoint - updated 19 November 2026
 
-These are private acceptance builds. A completed EAS archive is not an App Store or TestFlight release.
+These are private acceptance builds. Build/device evidence is from 13 November; the Firebase APNs configuration below was verified on 19 November. A completed EAS archive is not an App Store or TestFlight release.
 
 ## Built and verified
 
@@ -33,7 +33,9 @@ The Android signing certificate SHA-256 is `F772D2E6EAE6DD343C29D4339CBA2DF630C9
 
 EAS production has the public Firebase client settings and encrypted `GOOGLE_SERVICES_PLIST` file. Copying the Android Maps credential/client file to EAS was rejected by automatic approval review because that destination was not explicitly approved. Android releases were completed locally. A cloud Android build still needs that separate configuration; do not assume the current production profile alone supplies it.
 
-The user approved reusing APNs key `8LFLW7W3U9`, team `25L4M5VTCR`, including its existing use by `263-gaming`. It is assigned to Civic263 in EAS. Apple rejected creating another team-scoped key because its limit was reached. No existing key was revoked. The Firebase upload and an actual iPhone delivery check remain separate acceptance steps.
+The user approved reusing APNs key `8LFLW7W3U9`, team `25L4M5VTCR`, including its existing use by `263-gaming`. It is assigned to Civic263 in EAS. Apple rejected creating another team-scoped key because its limit was reached. No existing key was revoked. On 19 November, the existing key was downloaded through Civic263's official Expo credential page and uploaded to the correct Firebase iOS client's production APNs slot. The saved key/team persisted after a console reload. The development slot remains unconfigured; build 4 uses production APNs. The private key is ignored and access-restricted, with no private material written to source/logs. Actual iPhone delivery remains R03.
+
+App Store Connect app ID `6836809635` is recorded in the `testflight` submit profile. The user separately approved reusing existing API key `GR74QN3BR3` (EAS), which is now assigned to Civic263. The refreshed Apple session prepared the app and internal `Team (Expo)` group with access for the owner's account only. EAS submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` targets the inspected version 0.1.0 build 4 archive. It was queued on 19 November; Apple processing and installable TestFlight availability are not yet verified.
 
 ## Private field test
 
@@ -51,6 +53,6 @@ Account recovery links Firebase credentials to the existing resident UID. Sign-i
 
 Public rollout still needs physical geofence/termination acceptance, iPhone installation/App Attest/push acceptance, TestFlight processing/tester access, account deletion/lifecycle, and the existing operational/privacy/pilot gates. App Store publication was not performed.
 
-The approved APNs upload is blocked by browser URL-verification tooling, not missing consent for key `8LFLW7W3U9`. The read-only TestFlight check could not find the app with an App Store Connect API key available to this project; identify the app/key access before submission. Use the [delivery plan](../tasks/plan.md) and [tracker](../tasks/todo.md) for the next actions. Implementation checkpoint `ece8053` preserves the source/configuration after these working-tree builds; it is not a claim that they were rebuilt by clean CI from that commit. Private artifacts and signing/configuration files remain ignored.
+Firebase production APNs configuration and TestFlight app/key access are configured. Follow the queued submission through Apple processing and owner availability before iPhone acceptance. Use the [delivery plan](../tasks/plan.md) and [tracker](../tasks/todo.md) for the next actions. Implementation checkpoint `ece8053` preserves the source/configuration after these working-tree builds; it is not a claim that they were rebuilt by clean CI from that commit. Private artifacts and signing/configuration files remain ignored.
 
 Dependency audit reported 25 findings (4 high, 20 moderate, 1 low; no critical). The high chain is the Firebase Node Firestore gRPC dependency. The [upstream certificate advisory](https://github.com/grpc/grpc-node/security/advisories/GHSA-m9gg-hp2v-232j) affects server-side certificate authentication; Civic263 runs no gRPC server. This reachability assessment does not mark the packages patched. Remaining advisories need a compatible SDK/dependency update review before public rollout; no forced downgrade or SDK change was applied.
