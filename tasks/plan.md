@@ -1,6 +1,6 @@
 # Civic263 delivery plan
 
-Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Build/device evidence is from 13 November; Firebase production APNs configuration was completed and verified on 19 November.
+Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Build/device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
 
 Civic263 is at controlled native release acceptance. Reporting, private photos, automatic publication review, the live public portal and community resolution are implemented. Android standalone acceptance has passed; the iOS archive is built. Public rollout has not passed its remaining device and operational gates.
 
@@ -17,7 +17,7 @@ Use [todo.md](todo.md) as the open task list. [Implementation status](../docs/IM
 | Community resolution                                 | Deployed and demo-tested        | Any resident proposes a fix; another opted-in identity confirms/rejects; fresh on-site GPS within 20 m and 1-3 new camera photos.                                                 |
 | Account recovery                                     | Implemented and emulator-tested | Optional email/password linking retains the UID; recovery restores private ownership.                                                                                             |
 | Android release                                      | Built; acceptance app installed | Signed ARM64 artifacts, no Metro dependency, live native App Check/Auth validation. Main Play-recognized distribution remains open.                                               |
-| iOS release                                          | Archive complete                | Version 0.1.0 build 4, correct team, production signed App Attest/APNs entitlements and encryption declaration. Installation/push remain open.                                    |
+| iOS release                                          | Internal TestFlight ready       | Version 0.1.0 build 4 validated by Apple and active for the owner's internal testing. Physical installation, App Attest and push remain open.                                     |
 | Nearby/background alerts                             | Implemented; acceptance partial | Note9 grants/service and earlier notification tests passed. Physical crossing and battery/termination checks remain open.                                                         |
 | Operations dashboard and advanced incident workflows | Scaffold/proposed               | Staff roles, duplicate merge, assignment and official handoffs are not finished workflows.                                                                                        |
 
@@ -32,9 +32,9 @@ Firebase Cloud Messaging now shows production APNs key `8LFLW7W3U9`, Apple team 
 - Evidence: the correct Firebase project/client and saved key/team were inspected through Chrome. Private key material remains in an ignored, access-restricted signing folder.
 - Likely files: `docs/NATIVE_RELEASE.md`, `docs/ACCEPTANCE_TESTING.md`. Scope: small configuration task.
 
-### R02 - Establish TestFlight access for the finished archive
+### R02 - Establish TestFlight access for the finished archive - complete
 
-App Store Connect app `6836809635` is prepared for `co.zw.civic263.mobile`. Existing submission key `GR74QN3BR3` (EAS) was explicitly approved and assigned to Civic263. Build 4 was queued as EAS submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` on 19 November. The owner's account has access to the internal `Team (Expo)` group. Apple processing and actual build availability remain unverified; no other testers or public distribution were requested.
+App Store Connect app `6836809635` is configured for `co.zw.civic263.mobile`. Existing submission key `GR74QN3BR3` (EAS) was explicitly approved and assigned to Civic263. EAS submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` finished successfully. On 19 November, Apple's API reported version 0.1.0 build 4 as `VALID`, unexpired and `IN_BETA_TESTING` internally, linked to the exact EAS build/submission. The owner's confirmed iPhone Apple account has access to the automatically assigned `Team (Expo)` internal group. External beta review/public distribution were not performed; physical installation is R03.
 
 - Acceptance: record the App Store Connect app ID and approved credential reference; submit the intended version/build; verify Apple processing and availability to the intended tester.
 - Verification: EAS submission status plus App Store Connect/TestFlight state, not a queued-job message alone.

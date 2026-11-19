@@ -1,6 +1,6 @@
 # Civic263 task tracker
 
-Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/device evidence remains the 13 November checkpoint; Firebase production APNs was verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
+Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/device evidence remains the 13 November checkpoint; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
 
 ## Completed checkpoint - ece8053
 
@@ -27,7 +27,7 @@ Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, depen
 ## Immediate release queue
 
 - [x] **R01 - Firebase APNs upload.** Production key `8LFLW7W3U9` / team `25L4M5VTCR` saved for the intended iOS client and verified after a console reload on 19 November. Private material remains ignored; real delivery is R03.
-- [ ] **R02 - TestFlight access/submission.** App `6836809635` and approved existing key `GR74QN3BR3` are configured; build 4 is queued as submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488`. Verify Apple processing and availability to the owner before marking complete.
+- [x] **R02 - TestFlight access/submission.** App `6836809635` and approved existing key `GR74QN3BR3` configured; submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` finished. Apple reports 0.1.0 build 4 `VALID` and internally `IN_BETA_TESTING`; the owner's confirmed iPhone account has internal group access. Physical installation is R03.
 - [ ] **R03 - Physical iPhone acceptance.** Install, verify App Attest, report/photo ownership and actual background push/deep linking.
 - [ ] **R04 - Private field-test pause fix.** Pause locally before server calls and verify offline/expired-grant behavior.
 - [ ] **R05 - Outdoor geofence crossing.** User deferred; renew test readiness only when needed, then observe real exit/entry/notification events.
@@ -39,7 +39,7 @@ The last Note9 test/service was active at the 13 November handoff. No successful
 
 ## Acceptance checkpoints
 
-- [ ] Configuration complete: R01 and R02.
+- [x] Configuration complete: R01 and R02.
 - [ ] Physical device acceptance complete: R03-R07, with temporary tests paused/cleaned.
 - [ ] Dependency risks reviewed: R08 and any necessary compatible native rebuilds.
 

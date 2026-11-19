@@ -10,9 +10,9 @@
 
 ## Current delivery checkpoint
 
-The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/device evidence is from 13 November; Firebase production APNs configuration was completed and verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
+The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
 
-Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Signed iOS 0.1.0 build 4 is ready, production APNs and App Store Connect access are configured, and the TestFlight upload is queued. Physical iPhone acceptance is still pending. Immediate work is Apple processing/owner availability, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
+Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Production APNs is configured, and Apple validated iOS 0.1.0 build 4 for internal TestFlight testing. Immediate work is physical iPhone acceptance, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
 
 The original 9 November proposal below still includes future functionality. Staff operations, duplicate merge, official handoffs, account deletion/withdrawal, full area analytics and public snapshot exports are not completed features. The approved public-led model and revised roadmap supersede earlier staff-only review and mandatory-device-only tracking assumptions.
 
@@ -453,13 +453,13 @@ Do not include social feeds, public chat, payments or automated emergency dispat
 
 The current roadmap is based on acceptance gates, not the original week estimates. No pilot or store release date is committed.
 
-| Phase                                    | Current state                                     | Exit still required                                                                                        |
-| ---------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Foundation and reporting                 | Implemented/deployed                              | Maintain ownership, privacy and retry regressions.                                                         |
-| Public register and community resolution | Implemented/deployed; physical acceptance partial | Actual geofence crossing and lifecycle checks; full public multi-incident map/analytics remain later work. |
-| Native distribution                      | Android standalone verified; iOS build 4 signed   | Firebase APNs, TestFlight/iPhone tests and main Android recognition/distribution (R01-R07).                |
-| Pilot hardening                          | Open                                              | Dependency updates and operational/privacy gates (R08, P01-P04).                                           |
-| Expanded operations/data                 | Backlog                                           | Select and split staff/duplicate/handoff and advanced data work (L01-L02).                                 |
+| Phase                                    | Current state                                                          | Exit still required                                                                                        |
+| ---------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Foundation and reporting                 | Implemented/deployed                                                   | Maintain ownership, privacy and retry regressions.                                                         |
+| Public register and community resolution | Implemented/deployed; physical acceptance partial                      | Actual geofence crossing and lifecycle checks; full public multi-incident map/analytics remain later work. |
+| Native distribution                      | Android standalone verified; iOS build 4 active in internal TestFlight | Physical iPhone tests and main Android recognition/distribution (R03-R07).                                 |
+| Pilot hardening                          | Open                                                                   | Dependency updates and operational/privacy gates (R08, P01-P04).                                           |
+| Expanded operations/data                 | Backlog                                                                | Select and split staff/duplicate/handoff and advanced data work (L01-L02).                                 |
 
 Use [tasks/plan.md](../tasks/plan.md) for the ordered queue and [tasks/todo.md](../tasks/todo.md) to mark completion. Configuration/device gates must pass before calling the native release accepted. A staff dashboard is not a prerequisite for public-led fix confirmation.
 

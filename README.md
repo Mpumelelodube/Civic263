@@ -6,7 +6,7 @@ A monorepo for Zimbabwe's public municipal issue register. Residents report with
 
 ## Current checkpoint
 
-Tracking updated 19 November 2026; build/device evidence is from the 13 November checkpoint. Reporting, private photos, automatic publication review, the public portal and community resolution are implemented and were deployed. A standalone signed Android acceptance app passed Note9 startup and live native attestation. iOS 0.1.0 build 4 is signed and inspected; Firebase production APNs configuration was completed and verified on 19 November. TestFlight/iPhone acceptance, the outdoor geofence walk and process/battery checks remain open.
+Tracking updated 19 November 2026; build/device evidence is from the 13 November checkpoint. Reporting, private photos, automatic publication review, the public portal and community resolution are implemented and were deployed. A standalone signed Android acceptance app passed Note9 startup and live native attestation. Firebase production APNs is configured, and Apple validated iOS 0.1.0 build 4 for internal TestFlight testing on 19 November. Physical iPhone acceptance, the outdoor geofence walk and process/battery checks remain open.
 
 Start with the [delivery plan](tasks/plan.md), [task tracker](tasks/todo.md), [implementation status](docs/IMPLEMENTATION_STATUS.md) and [native release evidence](docs/NATIVE_RELEASE.md). A completed archive does not establish device acceptance or public rollout readiness.
 

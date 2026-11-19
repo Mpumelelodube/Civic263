@@ -13,13 +13,13 @@ Trust boundaries: Firebase Auth owns private email/password; the JS auth session
 
 ## Progress against this scope - updated 19 November 2026
 
-| Item                       | Recorded result                                                                                                | Remaining acceptance                                                                       |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 1. Native bridge           | Android Play Integrity is live-validated; iOS bridge compiled and signed entitlements verified                 | Actual iPhone App Attest/FCM behavior (R03).                                               |
-| 2. Recovery                | Implemented, provider enabled, ownership/recovery emulator checks passed                                       | Real-user setup and broader deletion/account lifecycle remain separate gates.              |
-| 3. Android artifact        | Signed main/acceptance APKs built; side-by-side standalone acceptance and attestation passed                   | Main recognized-distribution acceptance (R07).                                             |
-| 4. Apple/iOS setup         | Build 4 ready; production APNs verified; App Store Connect app/key configured and upload queued on 19 November | Apple processing, owner TestFlight availability and iPhone acceptance (R02-R03).           |
-| 5. Device/background tests | Native tasks/grants and earlier notification tests verified                                                    | Reliable private-test stop, deferred walk and process/battery/revocation checks (R04-R06). |
-| 6. Cleanup/checks          | Six technical TTL policies active; conservative cleanup self-test/dry run and repository checks passed         | Broader retention/runbooks and compatible dependency security updates (R08, P01-P03).      |
+| Item                       | Recorded result                                                                                        | Remaining acceptance                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1. Native bridge           | Android Play Integrity is live-validated; iOS bridge compiled and signed entitlements verified         | Actual iPhone App Attest/FCM behavior (R03).                                               |
+| 2. Recovery                | Implemented, provider enabled, ownership/recovery emulator checks passed                               | Real-user setup and broader deletion/account lifecycle remain separate gates.              |
+| 3. Android artifact        | Signed main/acceptance APKs built; side-by-side standalone acceptance and attestation passed           | Main recognized-distribution acceptance (R07).                                             |
+| 4. Apple/iOS setup         | Production APNs verified; Apple validated build 4 and internal TestFlight is active on 19 November     | Physical iPhone installation, App Attest and push acceptance (R03).                        |
+| 5. Device/background tests | Native tasks/grants and earlier notification tests verified                                            | Reliable private-test stop, deferred walk and process/battery/revocation checks (R04-R06). |
+| 6. Cleanup/checks          | Six technical TTL policies active; conservative cleanup self-test/dry run and repository checks passed | Broader retention/runbooks and compatible dependency security updates (R08, P01-P03).      |
 
 The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) hold the ordered remaining work. Do not mark a device or distribution gate complete from a build result alone.
