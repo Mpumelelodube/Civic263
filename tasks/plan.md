@@ -1,6 +1,6 @@
 # Civic263 delivery plan
 
-Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Build/device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
+Updated: 19 November 2026. Implementation checkpoint: `ece8053`. Build/Android device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
 
 Civic263 is at controlled native release acceptance. Reporting, private photos, automatic publication review, the live public portal and community resolution are implemented. Android standalone acceptance has passed; the iOS archive is built. Public rollout has not passed its remaining device and operational gates.
 
@@ -8,18 +8,18 @@ Use [todo.md](todo.md) as the open task list. [Implementation status](../docs/IM
 
 ## Delivery state
 
-| Area                                                 | State                           | Evidence or limit                                                                                                                                                                 |
-| ---------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Workspace, shared domain and repository checks       | Complete                        | 37 tests, types, lint and all builds pass; SDK dependency validation ran offline.                                                                                                 |
-| Resident map and reporting                           | Implemented                     | Five-kilometre viewport loading, service icons/colours, system themes, location search/map/GPS, persistent drafts and at most three compressed photos.                            |
-| Firebase intake, Storage and publication             | Deployed                        | Auth/App Check, server commands, private originals, reviewed derivatives, owner-only history and six technical TTL policies.                                                      |
-| Public portal                                        | Deployed                        | Published register, selected-issue OpenStreetMap embed, details/photos, community history, resolved archive and allowlisted CSV. Full multi-incident interaction remains planned. |
-| Community resolution                                 | Deployed and demo-tested        | Any resident proposes a fix; another opted-in identity confirms/rejects; fresh on-site GPS within 20 m and 1-3 new camera photos.                                                 |
-| Account recovery                                     | Implemented and emulator-tested | Optional email/password linking retains the UID; recovery restores private ownership.                                                                                             |
-| Android release                                      | Built; acceptance app installed | Signed ARM64 artifacts, no Metro dependency, live native App Check/Auth validation. Main Play-recognized distribution remains open.                                               |
-| iOS release                                          | Internal TestFlight ready       | Version 0.1.0 build 4 validated by Apple and active for the owner's internal testing. Physical installation, App Attest and push remain open.                                     |
-| Nearby/background alerts                             | Implemented; acceptance partial | Note9 grants/service and earlier notification tests passed. Physical crossing and battery/termination checks remain open.                                                         |
-| Operations dashboard and advanced incident workflows | Scaffold/proposed               | Staff roles, duplicate merge, assignment and official handoffs are not finished workflows.                                                                                        |
+| Area                                                 | State                             | Evidence or limit                                                                                                                                                                 |
+| ---------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace, shared domain and repository checks       | Complete                          | 37 tests, types, lint and all builds pass; SDK dependency validation ran offline.                                                                                                 |
+| Resident map and reporting                           | Implemented                       | Five-kilometre viewport loading, service icons/colours, system themes, location search/map/GPS, persistent drafts and at most three compressed photos.                            |
+| Firebase intake, Storage and publication             | Deployed                          | Auth/App Check, server commands, private originals, reviewed derivatives, owner-only history and six technical TTL policies.                                                      |
+| Public portal                                        | Deployed                          | Published register, selected-issue OpenStreetMap embed, details/photos, community history, resolved archive and allowlisted CSV. Full multi-incident interaction remains planned. |
+| Community resolution                                 | Deployed and demo-tested          | Any resident proposes a fix; another opted-in identity confirms/rejects; fresh on-site GPS within 20 m and 1-3 new camera photos.                                                 |
+| Account recovery                                     | Implemented and emulator-tested   | Optional email/password linking retains the UID; recovery restores private ownership.                                                                                             |
+| Android release                                      | Built; acceptance app installed   | Signed ARM64 artifacts, no Metro dependency, live native App Check/Auth validation. Main Play-recognized distribution remains open.                                               |
+| iOS release                                          | Installed; acceptance in progress | Apple validated build 4; the owner confirmed installing and opening it on 19 November. App Attest, report/photo, permissions and push checks remain open.                         |
+| Nearby/background alerts                             | Implemented; acceptance partial   | Note9 grants/service and earlier notification tests passed. Physical crossing and battery/termination checks remain open.                                                         |
+| Operations dashboard and advanced incident workflows | Scaffold/proposed                 | Staff roles, duplicate merge, assignment and official handoffs are not finished workflows.                                                                                        |
 
 ## Next tasks, in order
 
@@ -43,7 +43,7 @@ App Store Connect app `6836809635` is configured for `co.zw.civic263.mobile`. Ex
 
 ### R03 - Verify the iPhone app and push delivery
 
-Install the processed TestFlight build on the available iPhone and exercise the actual native providers.
+The owner confirmed installing and opening version 0.1.0 build 4 on 19 November. Match the account/device and exercise the actual native providers; startup confirmation alone does not establish camera, location, App Attest or push delivery.
 
 - Acceptance: private commands pass App Attest with owner isolation; map/themes, location, camera/gallery and report retrieval work; an opted-in background push arrives and opens the correct report.
 - Verification: physical iPhone results, OS/build identity and sanitized server/device evidence in the acceptance document.

@@ -2,7 +2,7 @@
 
 ## Current native release checkpoint - updated 19 November 2026
 
-Repository checks were rerun on 19 November and passed. Build/device observations remain the 13 November evidence; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
+Repository checks were rerun on 19 November and passed. Build/Android device observations remain the 13 November evidence; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
 
 | Check                                     | Recorded outcome                                                                                                                                                                                                                    |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -14,7 +14,7 @@ Repository checks were rerun on 19 November and passed. Build/device observation
 | Technical cleanup                         | Six TTL policies ACTIVE. Cleanup exclusion self-test passed; live dry run found no eligible objects and deleted nothing.                                                                                                            |
 | Firebase APNs                             | PASS, 19 November: production key `8LFLW7W3U9` / team `25L4M5VTCR` saved for `co.zw.civic263.mobile` in `civic263-df6ec`, verified after a console reload. EAS assignment retained; no iPhone delivery pass is claimed.             |
 | TestFlight                                | PASS, 19 November: submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` finished; Apple reports 0.1.0 build 4 `VALID`, unexpired and internally `IN_BETA_TESTING`, linked to the intended EAS archive. Owner account access confirmed. |
-| Physical iPhone                           | OPEN: installation, real App Attest, report/photo isolation, camera/location, background push and deep linking.                                                                                                                     |
+| Physical iPhone                           | PARTIAL, 19 November: owner confirmed build 4 installed and opened. Device/account matching, real App Attest, report/photo isolation, camera/location, background push and deep linking remain open.                                |
 | Physical walk                             | DEFERRED BY USER: no actual exit/entry/notification acceptance yet.                                                                                                                                                                 |
 | Pause/process/battery                     | OPEN: last private test/service was active; no successful pause was verified. Fix local-first private-test stopping, then test revocation and lifecycle recovery.                                                                   |
 

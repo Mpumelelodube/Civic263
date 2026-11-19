@@ -10,7 +10,7 @@
 
 ## Current delivery checkpoint
 
-The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
+The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/Android device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
 
 Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Production APNs is configured, and Apple validated iOS 0.1.0 build 4 for internal TestFlight testing. Immediate work is physical iPhone acceptance, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
 
