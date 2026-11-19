@@ -10,3 +10,16 @@ Approved scope: complete the remaining Android/iOS build, native attestation, re
 6. Apply technical daily-quota expiry and safe orphan-upload cleanup without deleting retained evidence or ambiguous submissions. Run repository verification, isolated ownership/recovery tests, release bundle checks and configured device checks.
 
 Trust boundaries: Firebase Auth owns private email/password; the JS auth session remains in SecureStore. Native SDK attestation tokens are passed only to Firebase App Check in memory. Account switching must stop old reminder/push state and reset private in-memory views. A second account is not proof of a second human. Real report content is never changed for tests.
+
+## Progress against this scope - 13 November 2026
+
+| Item                       | Recorded result                                                                                        | Remaining acceptance                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1. Native bridge           | Android Play Integrity is live-validated; iOS bridge compiled and signed entitlements verified         | Actual iPhone App Attest/FCM behavior (R03).                                               |
+| 2. Recovery                | Implemented, provider enabled, ownership/recovery emulator checks passed                               | Real-user setup and broader deletion/account lifecycle remain separate gates.              |
+| 3. Android artifact        | Signed main/acceptance APKs built; side-by-side standalone acceptance and attestation passed           | Main recognized-distribution acceptance (R07).                                             |
+| 4. Apple/iOS setup         | Team/signing/Firebase client ready; build 4 finished; approved APNs key assigned in EAS                | Firebase APNs upload, App Store Connect/TestFlight access and iPhone acceptance (R01-R03). |
+| 5. Device/background tests | Native tasks/grants and earlier notification tests verified                                            | Reliable private-test stop, deferred walk and process/battery/revocation checks (R04-R06). |
+| 6. Cleanup/checks          | Six technical TTL policies active; conservative cleanup self-test/dry run and repository checks passed | Broader retention/runbooks and compatible dependency security updates (R08, P01-P03).      |
+
+The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) hold the ordered remaining work. Do not mark a device or distribution gate complete from a build result alone.

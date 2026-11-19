@@ -1,4 +1,23 @@
-# Reporting acceptance checks - 12 November 2026
+# Acceptance checks
+
+## Current native release checkpoint - 13 November 2026
+
+Repository checks were rerun on 19 November and passed; native/cloud observations in this section remain the 13 November evidence.
+
+| Check                                     | Recorded outcome                                                                                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Repository verification at Git checkpoint | PASS: 37 tests, workspace type checks, lint and builds; SDK dependency validation offline.                                                                                                                         |
+| Standalone Android acceptance             | PASS: signed side-by-side Note9 app cold-started without Metro, rendered the map/Reviews screens and reached protected live commands.                                                                              |
+| Native Android App Check/Auth             | PASS: sanitized live callable logs reported both verifications VALID.                                                                                                                                              |
+| iOS build/archive                         | PASS: version 0.1.0 build 4, intended bundle/team, production signed App Attest/APNs entitlements, bundled JavaScript and export declaration. No installed-iPhone pass is claimed.                                 |
+| Recovery/integration                      | Earlier demo checks passed: same-UID linking, separate-client recovery, password reset, failed-credential preservation, foreign-owner denial, iOS/Android token registration and private field-test access expiry. |
+| Technical cleanup                         | Six TTL policies ACTIVE. Cleanup exclusion self-test passed; live dry run found no eligible objects and deleted nothing.                                                                                           |
+| Firebase APNs                             | OPEN: key assigned in EAS; console upload unfinished after browser URL verification stopped automation. Exact shared-key consent is recorded.                                                                      |
+| TestFlight/iPhone                         | OPEN: app/key access, submission/processing, installation and real App Attest/push/camera/location checks.                                                                                                         |
+| Physical walk                             | DEFERRED BY USER: no actual exit/entry/notification acceptance yet.                                                                                                                                                |
+| Pause/process/battery                     | OPEN: last private test/service was active; no successful pause was verified. Fix local-first private-test stopping, then test revocation and lifecycle recovery.                                                  |
+
+The Git/documentation task reran repository verification and credential/diff checks; it did not rerun physical tests or deploy changes. Source checkpoint: `ece8053`. Private evidence/build outputs remain ignored. The [native release notes](NATIVE_RELEASE.md), [delivery plan](../tasks/plan.md) and [tracker](../tasks/todo.md) are the current handoff; sections below are historical checkpoints.
 
 ## On-site resolution acceptance � 12 November 2026
 
@@ -42,7 +61,6 @@ The connected Samsung Note9 exercised the report flow using its current foregrou
 Demo approval used an explicit simulated decision to exercise publication and photo views with synthetic images. It does not demonstrate that a real issue passes the live Vision/model assessment. The live checks deliberately kept synthetic reports private. Native/store App Check, standalone Maps keys, iOS acceptance, identity recovery and operational release gates remain separate work.
 
 The trusted live preview configuration is restored after testing. Synthetic local test receipts and their labelled source images remain identifiable as test data; they are not municipal reports or acknowledgements.
-
 
 ## Community review acceptance: 13 November 2026
 

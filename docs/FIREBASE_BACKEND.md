@@ -72,14 +72,13 @@ On Windows, Firebase SDK discovery can exceed its default 10-second window. If d
 
 ## Remaining release gates
 
-Native App Check/device-attested builds, identity recovery/linking, iOS acceptance, orphan-upload retention, operational monitoring, appeals/corrections, pilot boundaries and responsible-service arrangements still require work before a public rollout. The current integration supports controlled testing of real reports; it does not claim those release gates are complete.
+Standalone Android native attestation and account linking/recovery are implemented and verified at the levels recorded in [native release notes](NATIVE_RELEASE.md). iOS physical acceptance, Firebase APNs/TestFlight completion, the deferred outdoor walk, process/battery checks, account deletion/withdrawal, broader retention, dependency updates, operational monitoring, appeals and pilot/service arrangements remain open. All six technical TTL policies and a conservative committed-visit orphan-cleanup tool are in place; this is not a full retention/operations program. Follow the [delivery plan](../tasks/plan.md) and [tracker](../tasks/todo.md).
 
 ## On-site resolution deployment check � 12 November 2026
 
 All eight functions and the public Hosting version were deployed successfully. The live synthetic-identity command test passed, including separate private resolution photos and stable receipts. The live resolution-purpose Vision/Gemini contract conservatively held synthetic patterns. Browser acceptance loaded both original and resolution derivatives in an isolated archive and then restored the live preview.
 
 Deployment created `reviewResolution` as an ACTIVE private Eventarc worker with the existing backend service account for both runtime and delivery. The user explicitly approved the narrow `roles/run.invoker` binding on `reviewresolution` only for `civic263-backend@civic263-df6ec.iam.gserviceaccount.com`. It was applied and a successful Eventarc delivery (HTTP 204 at 17:19:59 UTC) was observed. Both review workers retain backend-service-account-only invocation; no `allUsers` or project-wide grant was added.
-
 
 ## Community review deployment: 13 November 2026
 

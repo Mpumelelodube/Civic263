@@ -4,18 +4,27 @@
 
 **Prepared:** 9 November 2026
 
-**Status:** Version 2 - Zimbabwe positioning and public portal redesign baseline
+**Updated:** 19 November 2026
+**Status:** Version 3 - public-led reporting implemented; native release acceptance in progress
 **Requested stack:** React Native + Expo, Firebase, Google Maps, iOS and Android
+
+## Current delivery checkpoint
+
+The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Deployment/device evidence is from 13 November; this revision refreshes tracking, not cloud or hardware acceptance. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
+
+Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Signed iOS 0.1.0 build 4 is ready, with physical iPhone acceptance still pending. Immediate work is Firebase APNs upload, TestFlight app/credential access, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
+
+The original 9 November proposal below still includes future functionality. Staff operations, duplicate merge, official handoffs, account deletion/withdrawal, full area analytics and public snapshot exports are not completed features. The approved public-led model and revised roadmap supersede earlier staff-only review and mandatory-device-only tracking assumptions.
 
 ## 1. Product recommendation
 
 Build a municipal issue reporting platform with three connected surfaces:
 
-1. **Resident mobile app:** open the app, report an issue, and track or update reports from the same app installation. No visible registration or sign-in.
+1. **Resident mobile app:** browse and report with a silent resident identity; optionally link email/password to recover private reports. Residents can propose fixes and independently review them from the app.
 2. **Public website:** Zimbabwe's public municipal issue register: an accessible map/list, reviewed evidence and response history, area summaries, and privacy-safe reusable public data. This is the main market proposition, with one pilot municipality initially.
-3. **Private operations dashboard:** review submissions, combine duplicates, route incidents to responsible teams, manage progress, moderate public content, and report on performance.
+3. **Private operations dashboard, future workflow:** manage exceptions, duplicates, service routing and controlled operational access. Its shell exists; these workflows are not yet implemented.
 
-Use **silent Firebase Anonymous Authentication** for residents. This gives the backend an identity for ownership without asking for a name, email, password, or phone number. Staff use named, authenticated accounts. Anonymous to the public does not mean the system collects no identifiers. Explain this plainly in the privacy notice. [S1]
+Use **silent Firebase Anonymous Authentication** for first use. Optional email/password linking retains the existing UID and report ownership; it is not a barrier to browsing or reporting. Firebase Auth credentials persist through the JavaScript SDK's SecureStore adapter. Future staff operations require named, authorized accounts. Anonymous to the public does not mean the system collects no identifiers. [S1]
 
 Distinguish a **report** from an **incident**. A report is one resident's submission. An incident is the real-world problem being managed. Five submissions about one pothole should produce five private report receipts and one public incident pin.
 
@@ -24,7 +33,7 @@ Distinguish a **report** from an **incident**. A report is one resident's submis
 - Launch in Zimbabwe, initially in one municipality still to be selected; municipality IDs and staff scoping exist from the start. Harare in design examples is illustrative, not a confirmed pilot.
 - English first; store user-facing strings separately for later local languages.
 - The platform initially operates independently unless a municipality partnership is confirmed.
-- A moderation team will review submissions during published operating hours.
+- Automatic privacy/publication review screens submissions and photos; held content stays private. Any resident may report a fix to a published issue, and a different opted-in identity may confirm or reject it with fresh on-site evidence. Exception/appeal ownership remains a pilot decision.
 - No emergency dispatch, live emergency monitoring, repair guarantee, or automatic municipal acknowledgement is implied.
 - Photos are supported; video, public comments, and direct messaging are deferred.
 - The public site is read-only in the MVP. Public reporting through a browser can follow later.
@@ -35,7 +44,7 @@ Distinguish a **report** from an **incident**. A report is one resident's submis
 | Principle                              | Product consequence                                                                                       |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Report quickly                         | Category, issue location, short description; photos optional. Aim for a typical report in under a minute. |
-| No account barrier                     | Anonymous identity happens silently; no sign-in screen for residents.                                     |
+| No account barrier                     | Anonymous identity happens silently; optional account recovery never blocks first-use reporting.          |
 | Show honest progress                   | Separate saved locally, received by the platform, reviewed, municipality notified, and repair progress.   |
 | Protect residents                      | No reporter identity, private contact details, push token, or raw device identifier on the public site.   |
 | Group the same problem                 | Link submissions to a canonical incident instead of multiplying public pins.                              |
@@ -70,7 +79,7 @@ For a focused pilot, enable roads, traffic lights, sewer, water, stormwater, was
 
 ### Navigation
 
-Use three main tabs: **Nearby**, **Report**, and **My reports**. Help, privacy, notification preferences, data deletion, and the tracking explanation live in a small settings/help screen. Use native iOS and Android navigation patterns.
+The app uses four main tabs: **Nearby**, **Report**, **Reviews**, and **My reports**. Reviews contains opt-in, nearby checks, inbox, visit history and alert preferences. Account/recovery is reachable from My reports. Data deletion/help completeness remains a release gate. The map dashboard loads a five-kilometre area and expands with navigation; system appearance applies to the app and map. Category icons/colours, typography, motion and keyboard-aware sheets are implemented.
 
 | Screen                 | Main content and actions                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -98,7 +107,7 @@ Use three main tabs: **Nearby**, **Report**, and **My reports**. Help, privacy, 
 9. Save/queue locally when offline. Only display 'Report received' and issue a public reference after server acknowledgement.
 10. Show the private receipt immediately after acknowledgement. Public publication waits for review.
 
-**Proposed form limits:** description 10-1,000 characters, maximum three photos, client target around 1 MB per compressed image, hard server limit 5 MB per uploaded image. Photo submission is optional. All limits are configurable and validated on the server.
+**Implemented form limits:** description 10-1,000 characters; initial photos optional, maximum three compressed JPEGs, at most 400 KiB and 1600 pixels per side each. The server decodes/re-encodes media and removes embedded metadata. Resolution visits require 1-3 new camera photos and a fresh precise, non-mocked location within 20 metres of the private defect pin. Limits are validated on the server.
 
 ### Design direction
 
@@ -107,14 +116,14 @@ Use three main tabs: **Nearby**, **Report**, and **My reports**. Help, privacy, 
 - Every status has text and an icon; never rely only on red/green.
 - Large tap targets (at least 44 pt on iOS / 48 dp on Android), readable contrast, dynamic text, screen-reader labels, keyboard-safe forms.
 - Native sheets and controls through `@expo/ui` where supported by the selected Expo SDK; virtualized lists for growing report feeds.
-- Provide a list equivalent to every map-based task. Maps, photos, and geocoding must not be prerequisites for submitting a text report.
+- Keep maps and lists accessible. Initial photos and geocoding are optional; submission requires a confirmed issue pin, which can be placed manually without location permission. Full accessibility acceptance remains open.
 - Every data screen has loading, empty, error, stale/offline, and content states. Drafts survive navigation and process termination.
 
-## 5. Tracking without visible sign-in
+## 5. Silent ownership and optional account recovery
 
 ### Ownership model
 
-- Firebase Auth maintains the anonymous resident UID using native persistence. Wait for auth restoration before deciding whether to create a new anonymous identity; do not sign in anew on every launch.
+- Firebase Auth maintains the resident UID using the JavaScript SDK and SecureStore persistence. Wait for auth restoration before creating a new anonymous identity; do not sign in anew on every launch.
 - `ownerUid` on each report is written by the server from verified authentication, never trusted from request JSON.
 - An installation UUID is optional telemetry/context, not an authentication credential, hardware fingerprint, or proof of ownership.
 - My reports queries only reports owned by the authenticated UID. Shared devices naturally share this app history; explain that behavior.
@@ -131,24 +140,24 @@ Use three main tabs: **Nearby**, **Report**, and **My reports**. Help, privacy, 
 | Open a shared incident link             | View the approved public incident; this does not import ownership.                     |
 | Same person on a new device             | New anonymous identity; cross-device tracking requires the optional recovery feature.  |
 
-SecureStore is suitable for a small optional recovery secret, not the whole report database. Android uninstall removes its data; iOS Keychain behavior must not be relied on as a recovery guarantee. The native Auth SDK owns Firebase credential persistence. [S4]
+SecureStore holds Firebase authentication persistence; report drafts and unsent photos use the app's file storage. Uninstall/keychain behavior is not a cross-device recovery guarantee. Optional email/password linking preserves the current Firebase UID; a separate client can recover that same owner after sign-in. Unsent drafts and photos remain on the original device. [S4]
 
-**MVP wording:** 'Your reports are linked to this app installation. Clearing app data, changing phones, or reinstalling may remove your ability to update them.'
+**Current wording:** 'Save your reporting identity to recover submitted reports on another device. Until you save it, clearing app data or losing this device can remove your private access. Unsent drafts and camera evidence remain on their original device.'
 
-**Later option:** offer an optional high-entropy recovery key for the installation's report history, with no email or password. Store only its cryptographic verifier on the server. Redemption requires a current authenticated session, rate limiting, explicit confirmation, atomic ownership transfer, invalidation of old recovery material, notification-token revocation, and an audit event. A short, public report reference is never a recovery key. This needs its own security design and testing before implementation.
+**Implemented recovery:** Firebase email/password linking, verification/reset actions and separate-client recovery. Failed credentials preserve the current identity. Sign-in refuses to abandon existing reports, visits, drafts or pending evidence; account changes pause old background/push state and reset private views. A public reference never grants ownership. Alternative recovery keys and full deletion/account lifecycle remain future work.
 
 ### Resident update permissions
 
-| Action                               | Before initial review                                                         | After acceptance / linkage to incident                                                        |
-| ------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Change description/category/location | Submit a versioned correction for the pending report.                         | Request a correction; preserve original evidence and incident coordinates until staff review. |
-| Add photo or observation             | Allowed as a private pending update.                                          | Allowed; new material stays private until approved.                                           |
-| Say 'It is fixed'                    | Add an observation.                                                           | Submit a resolution observation; staff confirms workflow changes.                             |
-| Say 'Still not fixed'                | Add an observation.                                                           | Request reopening with evidence; do not directly reopen the incident.                         |
-| Withdraw submission                  | Withdraw the resident contribution and stop publication of that contribution. | Same, but the incident may remain if other reports or service records support it.             |
-| Assign priority/team or mark closed  | Not permitted.                                                                | Not permitted.                                                                                |
+| Action                               | Before initial review                                                         | After acceptance / linkage to incident                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Change description/category/location | Submit a versioned correction for the pending report.                         | Request a correction; preserve original evidence and incident coordinates until staff review.                        |
+| Add photo or observation             | Allowed as a private pending update.                                          | Allowed; new material stays private until approved.                                                                  |
+| Say 'It is fixed'                    | Add an observation.                                                           | Published issue: any resident proposes a fix; another opted-in identity confirms with fresh on-site camera evidence. |
+| Say 'Still not fixed'                | Add an observation.                                                           | An independent on-site reviewer can reject the current fix and restore the active issue.                             |
+| Withdraw submission                  | Withdraw the resident contribution and stop publication of that contribution. | Same, but the incident may remain if other reports or service records support it.                                    |
+| Assign priority/team or mark closed  | Not permitted.                                                                | Not permitted.                                                                                                       |
 
-Re-review changed material. An unreviewed correction must never silently overwrite previously published content.
+The table above describes proposed correction/withdrawal workflows; those commands are not finished. Its earlier staff-only closure model is superseded for published issues: any authenticated resident can propose a fix; a different opted-in identity confirms or rejects it with the same 20 m/new-camera-evidence requirements. A pending fix remains on the active map; confirmation archives it; rejection restores the active status. Privacy approval of public photos is a separate automated review. Re-review changed material; unreviewed content must not overwrite approved public evidence.
 
 ## 6. Public website
 
@@ -246,30 +255,30 @@ Residents indicate observable danger; staff assigns final priority. Suggested la
 
 ### Stack decisions
 
-| Layer            | Proposed choice                                          | Reason                                                                                                                        |
-| ---------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Mobile           | React Native, Expo, TypeScript, Expo Router              | Shared iOS/Android application and native navigation.                                                                         |
-| Mobile Firebase  | `@react-native-firebase` modules                         | Native Auth, Firestore, Storage, Functions, App Check and Crashlytics. Requires a development build rather than Expo Go. [S2] |
-| Mobile maps      | `react-native-maps`, Google provider on both platforms   | Uses the existing Google Maps investment; iOS and Android require separate platform setup. [S5]                               |
-| Location/media   | Expo Location, ImagePicker, ImageManipulator, FileSystem | Foreground coordinates, optional photos, compression and persistent draft media.                                              |
-| Local state      | SQLite for drafts/outbox; small preferences separately   | Durable state for submissions that must survive restarts.                                                                     |
-| Push             | Expo Notifications + Expo Push Service                   | One selected push path, using APNs/FCM underneath; store delivery tokens privately and process receipts.                      |
-| Web              | Two React + TypeScript + Vite apps                       | Independent public and ops interfaces with shared domain types; straightforward static hosting.                               |
-| Web maps         | Google Maps JavaScript API                               | Separate browser key with domain/API restrictions.                                                                            |
-| Hosting          | Firebase Hosting with public/ops targets                 | Static apps, custom domains, and API rewrites. SSR/SEO rendering can be added later.                                          |
-| Backend          | Cloud Functions for Firebase, 2nd gen, TypeScript        | Validated commands, public queries, media processing, scheduled maintenance.                                                  |
-| Database         | Cloud Firestore Standard                                 | Operational reports, incidents, configuration, events, projections.                                                           |
-| Media            | Cloud Storage for Firebase                               | Private uploads and separately approved public derivatives.                                                                   |
-| Access and abuse | Firebase Auth, App Check, server limits, Security Rules  | Ownership, staff access, app attestation, quotas and access boundaries.                                                       |
-| Operations       | Crashlytics, Cloud Logging/Monitoring, scheduled backups | Reliability, queue alerts, service diagnostics and recovery.                                                                  |
+| Layer            | Current choice / remaining                                  | Reason                                                                                                              |
+| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Mobile           | React Native, Expo, TypeScript, Expo Router                 | Shared iOS/Android application and native navigation.                                                               |
+| Mobile Firebase  | `Firebase JS SDK + local bridge` modules                    | Auth/Functions with SecureStore; native Play Integrity/App Attest and iOS FCM in release builds.                    |
+| Mobile maps      | `react-native-maps`, Google on Android, platform map on iOS | Android uses the existing Maps key; iOS uses its platform provider.                                                 |
+| Location/media   | Expo Location, ImagePicker, ImageManipulator, FileSystem    | Foreground coordinates, optional photos, compression and persistent draft media.                                    |
+| Local state      | Expo File System JSON/media; small preferences separately   | Durable state for submissions that must survive restarts.                                                           |
+| Push             | Expo Notifications + direct FCM/APNs                        | Native device tokens, private registrations and bounded backend delivery; iPhone transport acceptance remains open. |
+| Web              | Two React + TypeScript + Vite apps                          | Independent public and ops interfaces with shared domain types; straightforward static hosting.                     |
+| Web maps         | Selected-issue OpenStreetMap embed                          | Current selected-position view needs no browser Maps key; multi-incident interaction remains planned.               |
+| Hosting          | Firebase Hosting with public/ops targets                    | Static apps, custom domains, and API rewrites. SSR/SEO rendering can be added later.                                |
+| Backend          | Cloud Functions for Firebase, 2nd gen, TypeScript           | Validated commands, public queries, media processing, scheduled maintenance.                                        |
+| Database         | Cloud Firestore Standard                                    | Operational reports, incidents, configuration, events, projections.                                                 |
+| Media            | Cloud Storage for Firebase                                  | Private uploads and separately approved public derivatives.                                                         |
+| Access and abuse | Firebase Auth, App Check, server limits, Security Rules     | Ownership, staff access, app attestation, quotas and access boundaries.                                             |
+| Operations       | Cloud Logging; monitoring/restore work remains planned      | Reliability, queue alerts, service diagnostics and recovery.                                                        |
 
-Select the current supported stable Expo SDK at kickoff, verify the native Firebase/maps/UI combination in a small spike, and lock dependencies. No SDK version is assumed in this plan. Install Expo-compatible packages with `npx expo install`. Treat the first real-device development builds as a dependency gate before feature implementation.
+The repository is pinned to Expo SDK 58. The current implementation uses Firebase's JavaScript Auth/Functions SDK with SecureStore persistence and a local native App Check/iOS FCM bridge, superseding the earlier React Native Firebase proposal. Drafts use Expo File System JSON/media storage, notifications go directly through FCM with APNs on iOS, and the public map currently embeds the selected approximate OpenStreetMap position. Android uses Google maps; iOS uses its platform map provider. A public multi-incident map, SQLite outbox, Crashlytics integration and broader analytics remain proposals. Install native packages with `npx expo install` and validate SDK compatibility.
 
 ### Data paths
 
-1. Mobile reads its own report data through narrowly scoped Firestore rules and receives bounded listeners while relevant screens are open.
+1. Mobile reads its own reports/photos through authenticated, owner-checked server functions. Direct client writes and private-media reads are denied.
 2. Mobile sends commands through callable Functions, carrying anonymous Auth and App Check tokens. Callables support token propagation/validation, but handlers must still check authorization and validate payloads. [S7]
-3. Storage rules allow only owner-scoped, ticket-authorized private uploads. Backend jobs validate and process media.
+3. Validated server commands receive the bounded compressed photos and write private originals. Client Storage uploads are denied. Review workers create separately approved public derivatives.
 4. Staff uses named Firebase Auth and server commands for every business mutation. Direct Firestore reads are permitted only for explicitly scoped views.
 5. Public mobile/web queries go through a bounded, cached HTTP API reading allowlisted public projections. Deny unauthenticated direct access to private Firestore collections and private Storage paths.
 6. Commands write business data, append-only application audit events and outbox entries in one transaction. Retryable workers update public projections, counters and notifications after commit.
@@ -430,17 +439,33 @@ Ask for push permission after a successful report or when enabling updates, rath
 
 | MVP / pilot                                                                                                              | Later                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| iOS/Android app, silent ownership, persistent drafts, photos, manual/GPS location                                        | Browser reporting, additional languages, optional recovery key                                |
-| My reports, reviewed update/correction/reopen requests                                                                   | Optional account linking if the product later needs cross-device convenience                  |
+| iOS/Android app, silent ownership, persistent drafts, photos, manual/GPS location                                        | Browser reporting, additional languages, additional recovery methods                          |
+| My reports, reviewed update/correction/reopen requests                                                                   | Additional recovery methods if later needed                                                   |
 | Reviewed public map/list/detail, evidence history, area summaries, bounded metadata CSV, methodology and abuse reporting | Full-text search, GeoJSON/API access at scale, precomputed heatmaps/tiles, area subscriptions |
 | Named-staff dashboard, moderation, duplicate linking/merge, assignment and status                                        | Native field-team app, scheduling, work orders and contractor integration                     |
 | Audit, scoped exports, basic analytics, push updates                                                                     | BigQuery/BI, cost/repeat-fault analysis, predictive maintenance                               |
 | Recorded handoffs and configured contacts                                                                                | Authorized municipal ticket-system integration, email/SMS/WhatsApp adapters                   |
 | Manual review, image sanitation and redaction                                                                            | AI category/duplicate suggestions with human approval                                         |
 
-Do not include social feeds, public chat, payments, AI auto-publication, continuous resident location tracking, or automated emergency dispatch in the initial product.
+Do not include social feeds, public chat, payments or automated emergency dispatch in the initial product. The earlier no-AI-publication assumption is superseded by the deployed automatic privacy/publication review with conservative holds. Background nearby invitations require a separate opt-in, can be paused, and do not publish resident location or retain a route history. Optional account linking is implemented; manual staff workflows in the table remain proposals.
 
 ## 16. Delivery roadmap
+
+The current roadmap is based on acceptance gates, not the original week estimates. No pilot or store release date is committed.
+
+| Phase                                    | Current state                                     | Exit still required                                                                                        |
+| ---------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Foundation and reporting                 | Implemented/deployed                              | Maintain ownership, privacy and retry regressions.                                                         |
+| Public register and community resolution | Implemented/deployed; physical acceptance partial | Actual geofence crossing and lifecycle checks; full public multi-incident map/analytics remain later work. |
+| Native distribution                      | Android standalone verified; iOS build 4 signed   | Firebase APNs, TestFlight/iPhone tests and main Android recognition/distribution (R01-R07).                |
+| Pilot hardening                          | Open                                              | Dependency updates and operational/privacy gates (R08, P01-P04).                                           |
+| Expanded operations/data                 | Backlog                                           | Select and split staff/duplicate/handoff and advanced data work (L01-L02).                                 |
+
+Use [tasks/plan.md](../tasks/plan.md) for the ordered queue and [tasks/todo.md](../tasks/todo.md) to mark completion. Configuration/device gates must pass before calling the native release accepted. A staff dashboard is not a prerequisite for public-led fix confirmation.
+
+### Historical sizing and epics from the 9 November baseline
+
+The estimates and epics below are retained as proposal history, not current progress or a delivery promise.
 
 **Planning estimate, revised for version 2:** provision roughly 13-14 engineering weeks for two experienced developers with part-time design/QA and a product/operations owner. The original 12-week baseline grows by an estimated 1-2 weeks for public evidence provenance, area methodology and safe data publication; validate this in ticket estimation. A single developer should provision roughly 20-26 weeks. These are estimates, not commitments; store review and partnership approvals add external time. Rich analytics, GeoJSON, a developer API and public historical bulk exports remain later scope.
 
@@ -533,18 +558,13 @@ Do not assume the platform is free because Firebase and Maps have no-cost allowa
 
 Runbooks must cover urgent-risk triage, unlawful/identifying content, compromised staff access, blocked contributors, failed publication jobs, billing/quota exhaustion, backups/restore and a public-map publication pause. Staff availability and municipal participation are as necessary as the software.
 
-## 19. Decisions to confirm before coding
+## 19. Confirmed decisions and open rollout decisions
 
-1. Zimbabwe pilot municipality/service boundary and verified local emergency numbers. Country is confirmed; municipality is not.
-2. Independent community platform or official municipal channel; who is authorized to claim work completion?
-3. Working name/branding, domain and app bundle/package IDs.
-4. Named moderation owner, operating hours, initial service departments and handoff process.
-5. Initial categories and which require urgent guidance or short-lived map visibility.
-6. Whether optional recovery is needed at launch; baseline is device-linked tracking with a clear limitation.
-7. Expected monthly reports/map sessions, budget owner, Firebase region and data/backup retention.
-8. Delivery team and pilot schedule. Store-review timing remains outside the engineering estimate.
+Confirmed: Zimbabwe-only Places; Civic263 branding; `co.zw.civic263.mobile`; Firebase `civic263-df6ec` in europe-west1; Apple team `25L4M5VTCR`; public-led on-site fix confirmation; optional email/password recovery; automated privacy/publication review; maximum three initial photos; foreground and separately opted-in background invitations; reuse of the existing Maps credential without creating another Maps key.
 
-Recommended next step: approve this baseline, confirm the pilot/operating model, then implement Phase 1's real-device ownership/maps/upload/attestation spike before building the full experience.
+Open decisions: pilot/service boundaries and official-versus-independent wording; verified emergency/support contacts; appeals and held-content ownership; account deletion/withdrawal and retention; operational budgets/monitoring/backups; App Store Connect app/key and main Android distribution access; privacy/reuse terms and the pilot rollout date. Staff workflows and advanced public data features need their own implementation slices if selected.
+
+Next: complete the ordered release queue in [the delivery plan](../tasks/plan.md), beginning with Firebase APNs and TestFlight configuration while the private-test pause fix is prepared. Resume the deferred physical walk only when the user is ready. Do not restart the completed foundation or treat an EAS archive as a delivered iPhone test.
 
 ## 20. Official technical references
 
