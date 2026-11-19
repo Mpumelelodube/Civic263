@@ -28,7 +28,7 @@ Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, depen
 
 - [x] **R01 - Firebase APNs upload.** Production key `8LFLW7W3U9` / team `25L4M5VTCR` saved for the intended iOS client and verified after a console reload on 19 November. Private material remains ignored; real delivery is R03.
 - [x] **R02 - TestFlight access/submission.** App `6836809635` and approved existing key `GR74QN3BR3` configured; submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` finished. Apple reports 0.1.0 build 4 `VALID` and internally `IN_BETA_TESTING`; the owner's confirmed iPhone account has internal group access. Physical installation is R03.
-- [ ] **R03 - Physical iPhone acceptance.** Owner confirmed build 4 installed and opened on 19 November. Match the account/device and verify App Attest, report/photo ownership, camera/location and actual background push/deep linking.
+- [ ] **R03 - iOS device acceptance.** Device clarified as iPad Pro M2/iPadOS 26. Build 4 identity, protected photo view and background push/tap-to-open passed. Build 5 owner-link fix (`8e1fb00`) is built/inspected; its private submission, update and report-link retest remain pending, with theme/location/camera/gallery checks and physical iPhone coverage still open.
 - [ ] **R04 - Private field-test pause fix.** Pause locally before server calls and verify offline/expired-grant behavior.
 - [ ] **R05 - Outdoor geofence crossing.** User deferred; renew test readiness only when needed, then observe real exit/entry/notification events.
 - [ ] **R06 - Process/battery/permission acceptance.** Check background, force-stop/manual reopen, revocation and pause; retain identities and evidence.
