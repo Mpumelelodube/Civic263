@@ -12,7 +12,7 @@
 
 The [delivery plan](../tasks/plan.md) and [task tracker](../tasks/todo.md) are the current execution record. The implemented work was committed and pushed as `ece8053`. Build/Android device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. See [implementation status](IMPLEMENTATION_STATUS.md) and [native release evidence](NATIVE_RELEASE.md) for verified results.
 
-Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Production APNs is configured, and Apple validated iOS 0.1.0 build 4 for internal TestFlight testing. The current device was clarified as iPad Pro M2/iPadOS 26: protected photo viewing and background push/tap-to-reopen passed. Build 5 contains the owner-report link fix, with private delivery/update and retest pending. Immediate work is the remaining iOS controls and physical iPhone coverage, a reliable private-test pause, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
+Reporting/private photos, automatic publication review, the public register, community fix confirmation and optional account recovery are implemented. Android standalone acceptance has passed. Production APNs is configured, and Apple validated iOS 0.1.0 builds 4 and 5 for internal TestFlight testing. On iPad Pro M2/iPadOS 26, protected photo viewing, background push/tap-to-reopen, app/map themes, current-location pin and camera/gallery with the three-photo maximum passed on build 4. Build 5 contains the owner-report link fix; update/retest is pending. Only the iPad is available today, so physical iPhone coverage is deferred and unverified. Next are reliable private-test pausing, the deferred outdoor crossing, process/battery checks and main Android distribution acceptance.
 
 The original 9 November proposal below still includes future functionality. Staff operations, duplicate merge, official handoffs, account deletion/withdrawal, full area analytics and public snapshot exports are not completed features. The approved public-led model and revised roadmap supersede earlier staff-only review and mandatory-device-only tracking assumptions.
 
@@ -453,13 +453,13 @@ Do not include social feeds, public chat, payments or automated emergency dispat
 
 The current roadmap is based on acceptance gates, not the original week estimates. No pilot or store release date is committed.
 
-| Phase                                    | Current state                                                          | Exit still required                                                                                        |
-| ---------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Foundation and reporting                 | Implemented/deployed                                                   | Maintain ownership, privacy and retry regressions.                                                         |
-| Public register and community resolution | Implemented/deployed; physical acceptance partial                      | Actual geofence crossing and lifecycle checks; full public multi-incident map/analytics remain later work. |
-| Native distribution                      | Android standalone verified; iOS build 4 active in internal TestFlight | Physical iPhone tests and main Android recognition/distribution (R03-R07).                                 |
-| Pilot hardening                          | Open                                                                   | Dependency updates and operational/privacy gates (R08, P01-P04).                                           |
-| Expanded operations/data                 | Backlog                                                                | Select and split staff/duplicate/handoff and advanced data work (L01-L02).                                 |
+| Phase                                    | Current state                                                                 | Exit still required                                                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Foundation and reporting                 | Implemented/deployed                                                          | Maintain ownership, privacy and retry regressions.                                                              |
+| Public register and community resolution | Implemented/deployed; physical acceptance partial                             | Actual geofence crossing and lifecycle checks; full public multi-incident map/analytics remain later work.      |
+| Native distribution                      | Android standalone verified; iOS builds 4 and 5 active in internal TestFlight | Build-5 report-link retest, deferred physical iPhone tests and main Android recognition/distribution (R03-R07). |
+| Pilot hardening                          | Open                                                                          | Dependency updates and operational/privacy gates (R08, P01-P04).                                                |
+| Expanded operations/data                 | Backlog                                                                       | Select and split staff/duplicate/handoff and advanced data work (L01-L02).                                      |
 
 Use [tasks/plan.md](../tasks/plan.md) for the ordered queue and [tasks/todo.md](../tasks/todo.md) to mark completion. Configuration/device gates must pass before calling the native release accepted. A staff dashboard is not a prerequisite for public-led fix confirmation.
 
@@ -564,7 +564,7 @@ Confirmed: Zimbabwe-only Places; Civic263 branding; `co.zw.civic263.mobile`; Fir
 
 Open decisions: pilot/service boundaries and official-versus-independent wording; verified emergency/support contacts; appeals and held-content ownership; account deletion/withdrawal and retention; operational budgets/monitoring/backups; App Store Connect app/key and main Android distribution access; privacy/reuse terms and the pilot rollout date. Staff workflows and advanced public data features need their own implementation slices if selected.
 
-Next: complete the ordered release queue in [the delivery plan](../tasks/plan.md), beginning with Firebase APNs and TestFlight configuration while the private-test pause fix is prepared. Resume the deferred physical walk only when the user is ready. Do not restart the completed foundation or treat an EAS archive as a delivered iPhone test.
+Next: complete the ordered release queue in [the delivery plan](../tasks/plan.md), finishing the build-5 iPad report-link test before the private-test pause fix. Firebase APNs and internal TestFlight configuration are complete. Physical iPhone coverage remains deferred; resume the outdoor walk only when the user is ready. Do not restart the completed foundation or treat an EAS archive as a physical-device pass.
 
 ## 20. Official technical references
 

@@ -15,10 +15,10 @@ Trust boundaries: Firebase Auth owns private email/password; the JS auth session
 
 | Item                       | Recorded result                                                                                        | Remaining acceptance                                                                       |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| 1. Native bridge           | Android integrity validated; iPad owner commands pass Auth/App Check and photo/push checks             | Build-5 report-link and remaining device checks; physical iPhone coverage (R03).           |
+| 1. Native bridge           | Android integrity validated; iPad owner commands, photo/push, themes, GPS and photo controls passed    | Build-5 report-link retest; physical iPhone coverage deferred (R03).                       |
 | 2. Recovery                | Implemented, provider enabled, ownership/recovery emulator checks passed                               | Real-user setup and broader deletion/account lifecycle remain separate gates.              |
 | 3. Android artifact        | Signed main/acceptance APKs built; side-by-side standalone acceptance and attestation passed           | Main recognized-distribution acceptance (R07).                                             |
-| 4. Apple/iOS setup         | Production APNs verified; Apple validated build 4 and internal TestFlight is active on 19 November     | Update/retest the owner-link fix and finish device coverage (R03).                         |
+| 4. Apple/iOS setup         | Production APNs verified; Apple validated builds 4 and 5 for internal TestFlight on 19 November        | Update/retest the owner-link fix and finish device coverage (R03).                         |
 | 5. Device/background tests | Native tasks/grants and earlier notification tests verified                                            | Reliable private-test stop, deferred walk and process/battery/revocation checks (R04-R06). |
 | 6. Cleanup/checks          | Six technical TTL policies active; conservative cleanup self-test/dry run and repository checks passed | Broader retention/runbooks and compatible dependency security updates (R08, P01-P03).      |
 
