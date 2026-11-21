@@ -11,14 +11,14 @@ Approved scope: complete the remaining Android/iOS build, native attestation, re
 
 Trust boundaries: Firebase Auth owns private email/password; the JS auth session remains in SecureStore. Native SDK attestation tokens are passed only to Firebase App Check in memory. Account switching must stop old reminder/push state and reset private in-memory views. A second account is not proof of a second human. Real report content is never changed for tests.
 
-## Progress against this scope - updated 19 November 2026
+## Progress against this scope - updated 21 November 2026
 
 | Item                       | Recorded result                                                                                        | Remaining acceptance                                                                       |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| 1. Native bridge           | Android integrity validated; iPad owner commands, photo/push, themes, GPS and photo controls passed    | Build-5 report-link retest; physical iPhone coverage deferred (R03).                       |
+| 1. Native bridge           | Android integrity validated; iPad owner commands, photo/push, themes, GPS and photo controls passed    | Build-6 draft recovery and report-link retests; physical iPhone coverage deferred (R03).   |
 | 2. Recovery                | Implemented, provider enabled, ownership/recovery emulator checks passed                               | Real-user setup and broader deletion/account lifecycle remain separate gates.              |
 | 3. Android artifact        | Signed main/acceptance APKs built; side-by-side standalone acceptance and attestation passed           | Main recognized-distribution acceptance (R07).                                             |
-| 4. Apple/iOS setup         | Production APNs verified; Apple validated builds 4 and 5 for internal TestFlight on 19 November        | Update/retest the owner-link fix and finish device coverage (R03).                         |
+| 4. Apple/iOS setup         | Production APNs verified; Apple validated builds 4 and 5 for internal TestFlight on 19 November        | Deliver build 6 and retest preserved drafts/report links (R03).                            |
 | 5. Device/background tests | Native tasks/grants and earlier notification tests verified                                            | Reliable private-test stop, deferred walk and process/battery/revocation checks (R04-R06). |
 | 6. Cleanup/checks          | Six technical TTL policies active; conservative cleanup self-test/dry run and repository checks passed | Broader retention/runbooks and compatible dependency security updates (R08, P01-P03).      |
 

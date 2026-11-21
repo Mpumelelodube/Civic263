@@ -1,6 +1,6 @@
 # Civic263 delivery plan
 
-Updated: 19 November 2026. Implementation checkpoint: `ece8053`; owner-link fix: `8e1fb00`. Build/Android device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
+Updated: 21 November 2026. Implementation checkpoint: `ece8053`; owner-link fix: `8e1fb00`; draft-recovery fix: `8c428f7`. Build/Android device evidence is from 13 November; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November.
 
 Civic263 is at controlled native release acceptance. Reporting, private photos, automatic publication review, the live public portal and community resolution are implemented. Android standalone acceptance has passed; the iOS archive is built. Public rollout has not passed its remaining device and operational gates.
 
@@ -10,14 +10,14 @@ Use [todo.md](todo.md) as the open task list. [Implementation status](../docs/IM
 
 | Area                                                 | State                             | Evidence or limit                                                                                                                                                                 |
 | ---------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Workspace, shared domain and repository checks       | Complete                          | 43 tests, types, lint and all builds pass; SDK dependency validation ran offline.                                                                                                 |
+| Workspace, shared domain and repository checks       | Complete                          | 52 tests, types, lint and all builds pass on 21 November; SDK dependency validation ran offline.                                                                                  |
 | Resident map and reporting                           | Implemented                       | Five-kilometre viewport loading, service icons/colours, system themes, location search/map/GPS, persistent drafts and at most three compressed photos.                            |
 | Firebase intake, Storage and publication             | Deployed                          | Auth/App Check, server commands, private originals, reviewed derivatives, owner-only history and six technical TTL policies.                                                      |
 | Public portal                                        | Deployed                          | Published register, selected-issue OpenStreetMap embed, details/photos, community history, resolved archive and allowlisted CSV. Full multi-incident interaction remains planned. |
 | Community resolution                                 | Deployed and demo-tested          | Any resident proposes a fix; another opted-in identity confirms/rejects; fresh on-site GPS within 20 m and 1-3 new camera photos.                                                 |
 | Account recovery                                     | Implemented and emulator-tested   | Optional email/password linking retains the UID; recovery restores private ownership.                                                                                             |
 | Android release                                      | Built; acceptance app installed   | Signed ARM64 artifacts, no Metro dependency, live native App Check/Auth validation. Main Play-recognized distribution remains open.                                               |
-| iOS release                                          | Installed; acceptance in progress | iPad Pro M2/iPadOS 26: owner-photo, push, themes, location and photo controls passed on build 4. Build 5 is active in internal TestFlight; update/report-link retest is pending.  |
+| iOS release                                          | Installed; acceptance in progress | Build 5 retained the submitted report; photo-draft recovery and report-link retests await build 6.                                                                                |
 | Nearby/background alerts                             | Implemented; acceptance partial   | Note9 grants/service and earlier notification tests passed. Physical crossing and battery/termination checks remain open.                                                         |
 | Operations dashboard and advanced incident workflows | Scaffold/proposed                 | Staff roles, duplicate merge, assignment and official handoffs are not finished workflows.                                                                                        |
 
@@ -43,7 +43,7 @@ App Store Connect app `6836809635` is configured for `co.zw.civic263.mobile`. Ex
 
 ### R03 - Verify iOS device behavior and push delivery
 
-The actual test device is an iPad Pro M2 on iPadOS 26. Build 4 account matching, protected owner-photo retrieval and background push/tap-to-reopen passed. The owner also confirmed app/map light and dark themes, current-location pin, camera/gallery attachment and the three-photo maximum in an unsent draft. Build 5 contains the owner-safe fallback for unavailable public report links; its archive is verified, submission finished, and Apple reports it VALID and internally IN_BETA_TESTING. Update through TestFlight without uninstalling, preserve the draft and retest the specific report link. Only the iPad is available today; physical iPhone screen/hardware coverage is deferred and unverified.
+Build 5 installed on the iPad and retained the submitted report, but exposed the preserved-files warning for a saved photo draft. The matching iOS container-path defect is fixed in source `8c428f7`: safe legacy photo paths resolve under current Documents and new saves store relative paths. Repository verification passed on 21 November with 52 tests, types, lint, builds and offline Expo dependency validation. Build 6 (`7c276e2d-186d-4988-b701-ea809f2adf41`) and submission `daf68990-cdfb-47ff-b089-9c9b11002577` are scheduled through the same private TestFlight profile; processing, preserved-draft/text/photo recovery and notification report-link retests remain pending. Physical iPhone coverage remains deferred and unverified.
 
 - Acceptance: private commands pass App Attest with owner isolation; map/themes, location, camera/gallery and report retrieval work; an opted-in background push arrives and opens the correct report.
 - Verification: record the actual model/OS/build and sanitized server/device evidence. Current results are for iPad; do not report them as physical iPhone coverage.

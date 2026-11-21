@@ -1,6 +1,6 @@
 # Civic263 task tracker
 
-Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/Android device evidence remains the 13 November checkpoint; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
+Updated: 21 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/Android device evidence remains the 13 November checkpoint; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
 
 ## Completed checkpoint - ece8053
 
@@ -28,7 +28,7 @@ Updated: 19 November 2026. See [plan.md](plan.md) for acceptance criteria, depen
 
 - [x] **R01 - Firebase APNs upload.** Production key `8LFLW7W3U9` / team `25L4M5VTCR` saved for the intended iOS client and verified after a console reload on 19 November. Private material remains ignored; real delivery is R03.
 - [x] **R02 - TestFlight access/submission.** App `6836809635` and approved existing key `GR74QN3BR3` configured; submission `d102ea16-59e6-4305-b2d1-9a7dd6fb2488` finished. Apple reports 0.1.0 build 4 `VALID` and internally `IN_BETA_TESTING`; the owner's confirmed iPhone account has internal group access. Physical installation is R03.
-- [ ] **R03 - iOS device acceptance.** iPad Pro M2/iPadOS 26 build 4 passed identity, private photo, background push/tap-to-open, app/map themes, current-location pin, camera/gallery and three-photo maximum checks. Build 5 owner-link fix (`8e1fb00`) is built/inspected, submitted and VALID/IN_BETA_TESTING internally. Update and report-link retest remain pending. Only the iPad is available today; physical iPhone screen/hardware coverage is deferred and unverified.
+- [ ] **R03 - iOS device acceptance.** Build 5 installed on the iPad and retained the submitted report, but exposed the preserved-files warning for a saved photo draft. The matching iOS container-path defect is fixed in source `8c428f7`: safe legacy photo paths resolve under current Documents and new saves store relative paths. Repository verification passed on 21 November with 52 tests, types, lint, builds and offline Expo dependency validation. Build 6 (`7c276e2d-186d-4988-b701-ea809f2adf41`) and submission `daf68990-cdfb-47ff-b089-9c9b11002577` are scheduled through the same private TestFlight profile; processing, preserved-draft/text/photo recovery and notification report-link retests remain pending. Physical iPhone coverage remains deferred and unverified.
 - [ ] **R04 - Private field-test pause fix.** Pause locally before server calls and verify offline/expired-grant behavior.
 - [ ] **R05 - Outdoor geofence crossing.** User deferred; renew test readiness only when needed, then observe real exit/entry/notification events.
 - [ ] **R06 - Process/battery/permission acceptance.** Check background, force-stop/manual reopen, revocation and pause; retain identities and evidence.
