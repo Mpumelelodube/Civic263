@@ -3,6 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { PHOTO_LIMITS, type DraftPhoto } from '@civic263/domain';
+import { restoreDraftPhotoUri } from './draft-photo-path';
 
 export async function compressPhoto(asset: ImagePickerAsset): Promise<DraftPhoto> {
   const context = ImageManipulator.manipulate(asset.uri);
@@ -42,8 +43,12 @@ export async function compressPhoto(asset: ImagePickerAsset): Promise<DraftPhoto
 }
 
 export function removePhotoFile(photo: DraftPhoto) {
-  const directory = new Directory(Paths.document, 'civic263-photos');
-  if (!photo.uri.startsWith(directory.uri.replace(/\/$/u, '') + '/')) return;
-  const file = new File(photo.uri);
+  let uri: string;
+  try {
+    uri = restoreDraftPhotoUri(photo, Paths.document.uri);
+  } catch {
+    return;
+  }
+  const file = new File(uri);
   if (file.exists) file.delete();
 }

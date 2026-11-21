@@ -10,6 +10,7 @@ import {
   type ResolutionFix,
 } from '@civic263/domain';
 import { removePhotoFile } from './photos';
+import { draftPhotoPath, restoreDraftPhotoUri } from './draft-photo-path';
 
 export type CapturedResolutionPhoto = DraftPhoto & { capturedAt: number; location: ResolutionFix };
 export type ResolutionDraft = {
@@ -34,13 +35,24 @@ export async function loadResolutionDraft(reportId: string): Promise<ResolutionD
   if (!Array.isArray(value.photos) || value.photos.length > 3)
     throw new Error('Saved evidence could not be read.');
   if (value.pending) value.pending = parseCommunityCheck(value.pending);
+  value.photos = value.photos.map((photo) => ({
+    ...photo,
+    uri: restoreDraftPhotoUri(photo, Paths.document.uri),
+  }));
   return value;
 }
 export async function saveResolutionDraft(reportId: string, draft: ResolutionDraft) {
+  const stored = {
+    ...draft,
+    photos: draft.photos.map((photo) => {
+      restoreDraftPhotoUri(photo, Paths.document.uri);
+      return { ...photo, uri: draftPhotoPath(photo.id) };
+    }),
+  };
   const file = fileFor(reportId);
   const temporary = new File(file.parentDirectory, `${reportId}.tmp`);
   temporary.create({ overwrite: true });
-  await temporary.write(JSON.stringify(draft));
+  await temporary.write(JSON.stringify(stored));
   await temporary.move(file, { overwrite: true });
 }
 export function clearResolutionDraft(reportId: string, draft: ResolutionDraft) {
