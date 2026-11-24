@@ -34,7 +34,7 @@ Updated: 21 November 2026. See [plan.md](plan.md) for acceptance criteria, depen
 - [ ] **R06 - Process/battery/permission acceptance.** Check background, force-stop/manual reopen, revocation and pause; retain identities and evidence.
 - [ ] **R07 - Main Android distribution acceptance.** Verify Play setup/recognition and the main package without clearing the existing debug identity.
 - [ ] **R09 - Large-screen (tablet/foldable) experience.** Implemented in source (24 November), device acceptance pending. iPad support and free rotation declared; window-size-driven chrome (bottom tabs, navigation rail, full sidebar); Nearby map with a floating inspector (counts, service filters, list, preview, in-place details); report composer with an inline service grid and a sticky readiness column; list/detail for My reports and Community; centred form sheets. Layout, grouping and readiness rules are unit-tested (65 tests). Needs a native rebuild, then checks on iPad portrait/landscape, split view/Stage Manager, an Android tablet and a foldable, including keyboard, dark mode and large text.
-- [ ] **R08 - Compatible dependency updates.** Triage the recorded 25 findings; no critical findings were recorded, but the four high findings are not patched by a reachability assessment.
+- [x] **R08 - Compatible dependency updates.** Done 24 November: 25 findings (4 high, 20 moderate, 1 low) reduced to 12 moderate with no high, low or critical. A `@grpc/grpc-js` 1.14.6 override fixes the Firebase gRPC high chain, and in-range Expo CLI, node-forge, fast-xml-parser, Storage and lint updates cleared the rest. No SDK change or downgrade. The 12 unpatched moderates (Firebase Admin `uuid`, which needs `firebase-admin` 14; Expo fingerprint `glob`/`minimatch`, which needs an Expo toolchain update) are recorded with reachability in [dependency audit](../docs/DEPENDENCY_AUDIT.md). Verified with `npm run verify` (65 tests) and the publication, community, intake and identity emulator suites. No native dependency changed.
 
 The last Note9 test/service was active at the 13 November handoff. No successful pause or outdoor crossing was subsequently verified; its two-hour grant has expired. Recheck and pause it before leaving it unattended; do not infer current device state from claim expiry. Rebuild affected candidates after fixes before recording a new device pass.
 
@@ -42,7 +42,7 @@ The last Note9 test/service was active at the 13 November handoff. No successful
 
 - [x] Configuration complete: R01 and R02.
 - [ ] Physical device acceptance complete: R03-R07, with temporary tests paused/cleaned.
-- [ ] Dependency risks reviewed: R08 and any necessary compatible native rebuilds.
+- [x] Dependency risks reviewed: R08 (no native rebuild needed for these JavaScript-only updates; follow-up majors are recorded in the dependency audit).
 
 ## Public pilot gates
 

@@ -44,10 +44,11 @@
     "eslint": "^9.39.0",
     "globals": "^16.5.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "8.59.3",
+    "typescript-eslint": "8.74.0",
     "prettier": "^3.6.2"
   },
   "overrides": {
+    "@grpc/grpc-js": "1.14.6",
     "@firebase/app": "0.16.2",
     "@firebase/app-compat": "0.5.18"
   }

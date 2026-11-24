@@ -34,7 +34,7 @@ Mobile nearby and public-detail reads request cache revalidation so a recently r
 
 The pre-deployment production audit found high-severity advisories in the existing image and request parsers. Sharp is now pinned to 0.35.5 and the deployed Functions package pins body-parser 2.4.0 through its override. These versions address the [Sharp native decoder advisories](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) and [body-parser compressed-request denial of service](https://github.com/advisories/GHSA-27r3-jxmh-p828). JPEG validation, metadata removal and the publication/resolution integration checks passed with the updated image library.
 
-`npm audit --workspace @civic263/functions --omit=dev --audit-level=high` now exits successfully with zero high/critical findings. Eight moderate and one low finding remain in the existing Firebase/Google SDK dependency chain (including uuid and fast-xml-parser); a wider SDK update is separate maintenance. This is not a claim that the dependency tree has no advisories.
+`npm audit --workspace @civic263/functions --omit=dev --audit-level=high` now exits successfully with zero high/critical findings. After the R08 updates (Storage 7.22.0 and fast-xml-parser 5.12.1), the low finding is cleared. Eight moderate findings remain in the Firebase Admin/Google Cloud `uuid` chain; they need `firebase-admin` 14, and their reachability is recorded in [dependency audit](DEPENDENCY_AUDIT.md). A wider SDK update is separate maintenance. This is not a claim that the dependency tree has no advisories.
 
 ## Automatic publication
 
