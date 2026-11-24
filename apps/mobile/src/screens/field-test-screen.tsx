@@ -8,6 +8,7 @@ import { ActionButton, IconBadge } from '@/components/action-button';
 import {
   isAcceptanceBuild,
   startOwnFieldTest,
+  readFieldTestCleanupPending,
   refreshOwnFieldTest,
   stopOwnFieldTest,
 } from '@/services/field-test';
@@ -17,9 +18,11 @@ export function FieldTestScreen() {
     insets = useSafeAreaInsets();
   const [session, setSession] = useState<FieldTestSession | null>(null),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState<string | null>(null);
+    [error, setError] = useState<string | null>(null),
+    [cleanupPending, setCleanupPending] = useState(false);
   const load = useCallback(async () => {
     try {
+      setCleanupPending(await readFieldTestCleanupPending());
       setSession(await refreshOwnFieldTest());
       setError(null);
     } catch {
@@ -45,8 +48,9 @@ export function FieldTestScreen() {
     try {
       if (start) setSession(await startOwnFieldTest());
       else {
-        await stopOwnFieldTest();
+        const result = await stopOwnFieldTest();
         setSession(null);
+        setCleanupPending(result.remoteCleanupPending);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not update the test.');
@@ -87,6 +91,13 @@ export function FieldTestScreen() {
       )}
       {isAcceptanceBuild ? (
         <>
+          {cleanupPending && (
+            <AppText accessibilityRole="alert" style={{ color: theme.error }}>
+              Background reminders are paused on this phone. The private test record could not be
+              closed on the server (offline or the test access has expired). It is scheduled for
+              automatic cleanup, and no new access has been requested.
+            </AppText>
+          )}
           <AppText style={{ color: theme.muted }}>
             Start at a safe place with precise GPS. Leave Civic263 Test in the background, walk
             about 300 m away, wait for the geofence exit, then return and allow a few minutes for

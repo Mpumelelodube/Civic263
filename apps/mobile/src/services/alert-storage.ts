@@ -11,6 +11,8 @@ import {
 
 export interface AlertState {
   fieldTest?: FieldTestSession;
+  /** The device is paused, but the private test's server cleanup has not been confirmed. */
+  fieldTestCleanupPending?: boolean;
   devicePaused?: boolean;
   devicePushPaused?: boolean;
   deviceBackgroundPaused?: boolean;

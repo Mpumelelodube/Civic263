@@ -1,5 +1,6 @@
 import { uuid } from 'expo';
-import type { FieldTestSession } from '@civic263/domain';
+import type { CommunityPreferences, FieldTestSession } from '@civic263/domain';
+import { stopFieldTestSafely } from './field-test-stop';
 import { communityCall, getCommunityProfile, saveCommunityPreferences } from './community';
 import { currentResolutionFix } from './resolution-evidence';
 import { readAlertState, updateAlertState } from './alert-storage';
@@ -37,6 +38,7 @@ export async function startOwnFieldTest() {
   });
   await updateAlertState((state) => {
     state.fieldTest = session;
+    delete state.fieldTestCleanupPending;
     state.refreshedAt = 0;
   });
   await reconcileCommunityRuntime();
@@ -51,13 +53,31 @@ export async function refreshOwnFieldTest() {
   return session;
 }
 export async function stopOwnFieldTest() {
-  await communityCall('community-field-test', { operation: 'stop' });
-  await updateAlertState((state) => {
-    delete state.fieldTest;
+  let next: CommunityPreferences | undefined;
+  return stopFieldTestSafely({
+    async pauseLocally() {
+      // Local pause first: no network call may precede it, so an expired grant or lost
+      // connection cannot leave background/geofence work running.
+      const state = await readAlertState();
+      next = { ...state.preferences, nearbyAlerts: false, backgroundAlerts: false };
+      await prepareCommunityPreferences(next, state.preferences);
+      await applyCommunityPreferences(next);
+      await updateAlertState((current) => {
+        delete current.fieldTest;
+      });
+    },
+    async stopRemotely() {
+      await communityCall('community-field-test', { operation: 'stop' });
+      if (next) await saveCommunityPreferences(next);
+    },
+    async recordRemoteCleanup(pending) {
+      await updateAlertState((state) => {
+        if (pending) state.fieldTestCleanupPending = true;
+        else delete state.fieldTestCleanupPending;
+      });
+    },
   });
-  const state = await readAlertState();
-  const next = { ...state.preferences, nearbyAlerts: false, backgroundAlerts: false };
-  await prepareCommunityPreferences(next, state.preferences);
-  await saveCommunityPreferences(next);
-  await applyCommunityPreferences(next);
+}
+export async function readFieldTestCleanupPending() {
+  return (await readAlertState()).fieldTestCleanupPending === true;
 }
