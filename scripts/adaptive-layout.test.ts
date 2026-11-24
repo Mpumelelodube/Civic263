@@ -50,3 +50,10 @@ test('the side panel never crowds out the map', () => {
     assert.ok(width - layout.sidePanelWidth >= width * 0.55);
   }
 });
+
+test('the Community list pane leaves the detail pane at least 300 points', () => {
+  for (const width of [600, 744, 834, 1024, 1366]) {
+    const layout = adaptiveLayout(width);
+    assert.ok(width - (layout.sidePanelWidth + 40) >= 300, `width ${width}`);
+  }
+});

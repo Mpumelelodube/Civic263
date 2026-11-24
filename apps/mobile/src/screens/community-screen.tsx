@@ -19,6 +19,7 @@ import {
 import { AppText } from '@/components/app-text';
 import { ActionButton, IconBadge } from '@/components/action-button';
 import { BottomSheet } from '@/components/bottom-sheet';
+import { ReportDetailsView } from '@/screens/report-details-screen';
 import {
   getCommunityInbox,
   getCommunityProfile,
@@ -52,6 +53,13 @@ export function CommunityScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Tablets and foldables: the list stays on the left and the selected issue opens beside it.
+  const split = layout.sidePanel;
+  function openIssue(id: string) {
+    if (split) setSelectedId(id);
+    else router.push({ pathname: '/report-details', params: { id, view: 'public' } });
+  }
   const [notice, setNotice] = useState<string | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
@@ -186,18 +194,27 @@ export function CommunityScreen() {
     } catch {
       setError('Could not mark this update read.');
     }
-    router.push({ pathname: '/report-details', params: { id: item.reportId, view: 'public' } });
+    openIssue(item.reportId);
   }
   const pending = issues.filter(
     (item) => item.communityResolution?.status === 'awaiting-confirmation',
   );
   const options = preferences ?? DEFAULT_COMMUNITY_PREFERENCES;
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: split ? 'row' : 'column',
+        backgroundColor: theme.background,
+      }}
+    >
       <ScrollView
+        style={
+          split ? { flexGrow: 0, flexShrink: 0, width: layout.sidePanelWidth + 40 } : undefined
+        }
         contentContainerStyle={{
-          ...centeredContent(layout, true),
-          padding: layout.gutter,
+          ...(split ? {} : centeredContent(layout, true)),
+          padding: split ? 16 : layout.gutter,
           paddingTop: insets.top + 16,
           paddingBottom: 40,
           gap: 20,
@@ -338,6 +355,9 @@ export function CommunityScreen() {
                   paddingVertical: 16,
                   borderTopWidth: 1,
                   borderColor: theme.border,
+                  ...(split && selectedId === item.id
+                    ? { backgroundColor: theme.tint, paddingHorizontal: 12, borderRadius: 12 }
+                    : {}),
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -358,12 +378,7 @@ export function CommunityScreen() {
                   }
                   icon="arrow"
                   variant="secondary"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/report-details',
-                      params: { id: item.id, view: 'public' },
-                    })
-                  }
+                  onPress={() => openIssue(item.id)}
                 />
               </View>
             ))}
@@ -458,6 +473,39 @@ export function CommunityScreen() {
           </>
         )}
       </ScrollView>
+      {split && (
+        <View
+          style={{
+            flex: 1,
+            borderLeftWidth: 1,
+            borderLeftColor: theme.border,
+            backgroundColor: theme.background,
+          }}
+        >
+          {selectedId ? (
+            <ReportDetailsView key={selectedId} id={selectedId} view="public" embedded />
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 32,
+                gap: 12,
+              }}
+            >
+              <IconBadge name="nearby" size={64} />
+              <AppText variant="heading" style={{ textAlign: 'center' }}>
+                Select an issue to review
+              </AppText>
+              <AppText style={{ color: theme.muted, textAlign: 'center' }}>
+                Choose a nearby check or an inbox update on the left. The issue, its photos and any
+                reported fix open here.
+              </AppText>
+            </View>
+          )}
+        </View>
+      )}
       <BottomSheet
         isPresented={settings}
         onDismiss={() => {

@@ -30,8 +30,26 @@ import { loadReportDetail, type ReportDetail } from '@/services/report-detail';
 
 export function ReportDetailsScreen() {
   const { id, view } = useLocalSearchParams<{ id?: string; view?: 'owner' | 'public' }>();
+  return <ReportDetailsView id={id} view={view} />;
+}
+/**
+ * The report details. `embedded` renders it as a pane beside a list (tablets and foldables):
+ * no back button, no extra top inset and a single column inside the pane.
+ */
+export function ReportDetailsView({
+  id,
+  view,
+  embedded = false,
+  onOpenPublic,
+}: {
+  id?: string | undefined;
+  view?: 'owner' | 'public' | undefined;
+  embedded?: boolean;
+  onOpenPublic?: (reportId: string) => void;
+}) {
   const theme = useTheme();
   const layout = useLayout();
+  const twoPane = !embedded && layout.columns >= 2;
   const reduced = useAppReducedMotion();
   const insets = useSafeAreaInsets();
   const [detail, setDetail] = useState<ReportDetail | null>(null);
@@ -110,22 +128,26 @@ export function ReportDetailsScreen() {
         contentContainerStyle={{
           ...centeredContent(layout, true),
           padding: layout.gutter,
-          paddingTop: insets.top + 16,
+          paddingTop: embedded ? 20 : insets.top + 16,
           paddingBottom: 40,
           gap: 20,
         }}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-          <ActionButton
-            label="Back"
-            icon="close"
-            variant="ghost"
-            disabled={resolving}
-            onPress={() => {
-              if (router.canGoBack()) router.back();
-              else router.replace('/my-reports');
-            }}
-          />
+          {embedded ? (
+            <View />
+          ) : (
+            <ActionButton
+              label="Back"
+              icon="close"
+              variant="ghost"
+              disabled={resolving}
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace('/my-reports');
+              }}
+            />
+          )}
           <ActionButton
             label="Refresh"
             icon="retry"
@@ -144,167 +166,183 @@ export function ReportDetailsScreen() {
             <AppText>Loading report and photos…</AppText>
           </View>
         ) : (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <IconBadge name={detail.item.categoryId} />
-              <AppText variant="eyebrow" style={{ color: theme.accent }}>
-                {detail.kind === 'owner'
-                  ? detail.item.testOnly
-                    ? 'TEST REPORT ONLY'
-                    : 'YOUR REPORT'
-                  : 'PUBLIC OBSERVATION'}
-              </AppText>
-            </View>
-            <AppText variant="title">
-              {detail.kind === 'owner' ? categoryLabel(detail.item.categoryId) : detail.item.title}
-            </AppText>
-            <AppText variant="label" selectable>
-              {detail.item.reference}
-            </AppText>
-            <AppText selectable>
-              {detail.kind === 'owner' ? detail.item.description : detail.item.summary}
-            </AppText>
-            <AppText style={{ color: theme.muted }}>
-              {detail.kind === 'owner' ? detail.item.landmark : detail.item.area}
-            </AppText>
-            <View style={{ padding: 18, borderRadius: 18, backgroundColor: theme.surface, gap: 8 }}>
-              <AppText variant="heading">
-                {['resolved', 'resolution-pending'].includes(detail.item.workflowStatus)
-                  ? workflowLabel(detail.item, detail.kind === 'owner')
-                  : detail.kind === 'owner'
+          <View
+            style={{
+              flexDirection: twoPane ? 'row' : 'column',
+              alignItems: twoPane ? 'flex-start' : 'stretch',
+              gap: 24,
+            }}
+          >
+            <View style={{ flex: twoPane ? 1 : undefined, gap: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <IconBadge name={detail.item.categoryId} />
+                <AppText variant="eyebrow" style={{ color: theme.accent }}>
+                  {detail.kind === 'owner'
                     ? detail.item.testOnly
-                      ? 'Test report kept private'
-                      : REVIEW_LABELS[detail.item.reviewStatus]
-                    : 'Published after automatic checks'}
-              </AppText>
-              {detail.item.resolution && (
-                <AppText style={{ color: theme.muted }}>
-                  {new Date(detail.item.resolution.resolvedAt).toLocaleString()}. Recorded from the
-                  reporter's observation.
+                      ? 'TEST REPORT ONLY'
+                      : 'YOUR REPORT'
+                    : 'PUBLIC OBSERVATION'}
                 </AppText>
-              )}
-              {detail.kind === 'owner' &&
-                detail.item.workflowStatus !== 'resolved' &&
-                detail.item.reviewReason && (
+              </View>
+              <AppText variant="title">
+                {detail.kind === 'owner'
+                  ? categoryLabel(detail.item.categoryId)
+                  : detail.item.title}
+              </AppText>
+              <AppText variant="label" selectable>
+                {detail.item.reference}
+              </AppText>
+              <AppText selectable>
+                {detail.kind === 'owner' ? detail.item.description : detail.item.summary}
+              </AppText>
+              <AppText style={{ color: theme.muted }}>
+                {detail.kind === 'owner' ? detail.item.landmark : detail.item.area}
+              </AppText>
+              <View
+                style={{ padding: 18, borderRadius: 18, backgroundColor: theme.surface, gap: 8 }}
+              >
+                <AppText variant="heading">
+                  {['resolved', 'resolution-pending'].includes(detail.item.workflowStatus)
+                    ? workflowLabel(detail.item, detail.kind === 'owner')
+                    : detail.kind === 'owner'
+                      ? detail.item.testOnly
+                        ? 'Test report kept private'
+                        : REVIEW_LABELS[detail.item.reviewStatus]
+                      : 'Published after automatic checks'}
+                </AppText>
+                {detail.item.resolution && (
                   <AppText style={{ color: theme.muted }}>
-                    {REVIEW_REASONS[detail.item.reviewReason]}
+                    {new Date(detail.item.resolution.resolvedAt).toLocaleString()}. Recorded from
+                    the reporter's observation.
                   </AppText>
                 )}
-              <AppText variant="caption" style={{ color: theme.muted }}>
-                {workflowLabel(detail.item, detail.kind === 'owner')}.{' '}
-                {detail.kind === 'public'
-                  ? HANDOFF_LABELS[detail.item.handoffStatus]
-                  : 'Receipt confirms platform intake, not municipal acknowledgement.'}
-              </AppText>
-              {detail.kind === 'owner' && detail.item.incidentReference && (
-                <ActionButton
-                  label="View public record"
-                  icon="nearby"
-                  variant="secondary"
-                  disabled={resolving}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/report-details',
-                      params: { id: detail.item.id, view: 'public' },
-                    })
-                  }
-                />
+                {detail.kind === 'owner' &&
+                  detail.item.workflowStatus !== 'resolved' &&
+                  detail.item.reviewReason && (
+                    <AppText style={{ color: theme.muted }}>
+                      {REVIEW_REASONS[detail.item.reviewReason]}
+                    </AppText>
+                  )}
+                <AppText variant="caption" style={{ color: theme.muted }}>
+                  {workflowLabel(detail.item, detail.kind === 'owner')}.{' '}
+                  {detail.kind === 'public'
+                    ? HANDOFF_LABELS[detail.item.handoffStatus]
+                    : 'Receipt confirms platform intake, not municipal acknowledgement.'}
+                </AppText>
+                {detail.kind === 'owner' && detail.item.incidentReference && (
+                  <ActionButton
+                    label="View public record"
+                    icon="nearby"
+                    variant="secondary"
+                    disabled={resolving}
+                    onPress={() =>
+                      onOpenPublic
+                        ? onOpenPublic(detail.item.id)
+                        : router.push({
+                            pathname: '/report-details',
+                            params: { id: detail.item.id, view: 'public' },
+                          })
+                    }
+                  />
+                )}
+              </View>
+              {detail.kind === 'public' || detail.item.publicationStatus === 'published' ? (
+                <>
+                  <CommunityActions
+                    key={`actions-${detail.item.id}-${version}`}
+                    reportId={detail.item.id}
+                    version={version}
+                    disabled={resolving}
+                    onStart={(kind, fixId) =>
+                      setConfirmResolution({ kind, ...(fixId ? { fixId } : {}) })
+                    }
+                  />
+                  <CommunityHistory
+                    key={`history-${detail.item.id}-${version}`}
+                    reportId={detail.item.id}
+                    version={version}
+                    onPhoto={setImage}
+                  />
+                </>
+              ) : (
+                detail.item.workflowStatus !== 'resolved' && (
+                  <AppText style={{ color: theme.muted }}>
+                    Community visits are available after the issue is published. This report stays
+                    private.
+                  </AppText>
+                )
               )}
             </View>
-            {detail.kind === 'public' || detail.item.publicationStatus === 'published' ? (
-              <>
-                <CommunityActions
-                  key={`actions-${detail.item.id}-${version}`}
-                  reportId={detail.item.id}
-                  version={version}
-                  disabled={resolving}
-                  onStart={(kind, fixId) =>
-                    setConfirmResolution({ kind, ...(fixId ? { fixId } : {}) })
-                  }
-                />
-                <CommunityHistory
-                  key={`history-${detail.item.id}-${version}`}
-                  reportId={detail.item.id}
-                  version={version}
-                  onPhoto={setImage}
-                />
-              </>
-            ) : (
-              detail.item.workflowStatus !== 'resolved' && (
-                <AppText style={{ color: theme.muted }}>
-                  Community visits are available after the issue is published. This report stays
-                  private.
-                </AppText>
-              )
-            )}
-            <AppText variant="heading">
-              {detail.kind === 'owner' ? 'Your submitted photos' : 'Approved public photos'}
-            </AppText>
-            <AppText variant="caption" style={{ color: theme.muted }}>
-              {detail.kind === 'owner'
-                ? 'Only your reporting identity can view these originals. Tap a photo to enlarge it.'
-                : 'Photos passed automatic privacy checks. Public locations are approximate. Tap a photo to enlarge it.'}
-            </AppText>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {photos.map((uri, index) => (
-                <Pressable
-                  key={index}
-                  style={{ width: '47%' }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open report photo ${index + 1}`}
-                  onPress={() => setImage(uri)}
-                >
-                  <Image
-                    source={{ uri }}
-                    style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
-                    contentFit="cover"
-                    cachePolicy={detail.kind === 'owner' ? 'none' : 'memory-disk'}
-                    accessibilityLabel={`Report photo ${index + 1}`}
-                  />
-                </Pressable>
-              ))}
-            </View>
-            {detail.item.resolution && (
-              <View style={{ gap: 12 }}>
-                <AppText variant="heading">Resolution photos</AppText>
-                <AppText variant="caption" style={{ color: theme.muted }}>
-                  {detail.kind === 'owner'
-                    ? 'Your new camera photos are saved separately from the original report.'
-                    : detail.item.resolution.evidenceStatus === 'pending'
-                      ? 'Resolution photos are awaiting automatic privacy checks.'
-                      : resolutionPhotos.length
-                        ? 'Resolution photos cleared for public viewing. The repair is reported by the resident.'
-                        : 'No resolution photos are available for public viewing.'}
-                </AppText>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                  {resolutionPhotos.map((uri, index) => (
-                    <Pressable
-                      key={index}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Open resolution photo ${index + 1}`}
-                      style={{ width: '47%' }}
-                      onPress={() => setImage(uri)}
-                    >
-                      <Image
-                        source={{ uri }}
-                        style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
-                        contentFit="cover"
-                        cachePolicy={detail.kind === 'owner' ? 'none' : 'memory-disk'}
-                        accessibilityLabel={`Resolution photo ${index + 1}`}
-                      />
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
-            {!photos.length && (
-              <AppText style={{ color: theme.muted }}>
-                {detail.kind === 'owner'
-                  ? 'No photos were attached to this report.'
-                  : 'No public photos are available.'}
+            <View style={{ flex: twoPane ? 1 : undefined, gap: 20 }}>
+              <AppText variant="heading">
+                {detail.kind === 'owner' ? 'Your submitted photos' : 'Approved public photos'}
               </AppText>
-            )}
-          </>
+              <AppText variant="caption" style={{ color: theme.muted }}>
+                {detail.kind === 'owner'
+                  ? 'Only your reporting identity can view these originals. Tap a photo to enlarge it.'
+                  : 'Photos passed automatic privacy checks. Public locations are approximate. Tap a photo to enlarge it.'}
+              </AppText>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {photos.map((uri, index) => (
+                  <Pressable
+                    key={index}
+                    style={{ width: '47%' }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open report photo ${index + 1}`}
+                    onPress={() => setImage(uri)}
+                  >
+                    <Image
+                      source={{ uri }}
+                      style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
+                      contentFit="cover"
+                      cachePolicy={detail.kind === 'owner' ? 'none' : 'memory-disk'}
+                      accessibilityLabel={`Report photo ${index + 1}`}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+              {detail.item.resolution && (
+                <View style={{ gap: 12 }}>
+                  <AppText variant="heading">Resolution photos</AppText>
+                  <AppText variant="caption" style={{ color: theme.muted }}>
+                    {detail.kind === 'owner'
+                      ? 'Your new camera photos are saved separately from the original report.'
+                      : detail.item.resolution.evidenceStatus === 'pending'
+                        ? 'Resolution photos are awaiting automatic privacy checks.'
+                        : resolutionPhotos.length
+                          ? 'Resolution photos cleared for public viewing. The repair is reported by the resident.'
+                          : 'No resolution photos are available for public viewing.'}
+                  </AppText>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                    {resolutionPhotos.map((uri, index) => (
+                      <Pressable
+                        key={index}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open resolution photo ${index + 1}`}
+                        style={{ width: '47%' }}
+                        onPress={() => setImage(uri)}
+                      >
+                        <Image
+                          source={{ uri }}
+                          style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
+                          contentFit="cover"
+                          cachePolicy={detail.kind === 'owner' ? 'none' : 'memory-disk'}
+                          accessibilityLabel={`Resolution photo ${index + 1}`}
+                        />
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              )}
+              {!photos.length && (
+                <AppText style={{ color: theme.muted }}>
+                  {detail.kind === 'owner'
+                    ? 'No photos were attached to this report.'
+                    : 'No public photos are available.'}
+                </AppText>
+              )}
+            </View>
+          </View>
         )}
       </ScrollView>
       {confirmResolution && detail && (
