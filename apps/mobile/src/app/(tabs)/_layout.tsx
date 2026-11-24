@@ -1,16 +1,25 @@
 import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { typography, useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
 
 export default function TabLayout() {
   const theme = useTheme();
+  const layout = useLayout();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarLabelStyle: { ...typography.caption, fontWeight: 'normal' },
         animation: 'none',
-        tabBarStyle: { backgroundColor: theme.navigation, borderTopColor: theme.border },
+        // Large screens: a left navigation rail frees the full height for content.
+        tabBarPosition: layout.navigationRail ? 'left' : 'bottom',
+        tabBarVariant: layout.navigationRail ? 'material' : undefined,
+        tabBarStyle: {
+          backgroundColor: theme.navigation,
+          borderTopColor: theme.border,
+          borderRightColor: theme.border,
+        },
         tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: theme.muted,
         sceneStyle: { backgroundColor: theme.background },

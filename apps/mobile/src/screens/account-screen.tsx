@@ -16,11 +16,14 @@ import {
   refreshResidentAccount,
 } from '@/services/identity';
 import { useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
+import { centeredContent } from '@/layout';
 
 type Account = Awaited<ReturnType<typeof residentAccount>>;
 export function AccountScreen() {
   const lock = useRef(false);
   const theme = useTheme(),
+    layout = useLayout(),
     insets = useSafeAreaInsets();
   const [account, setAccount] = useState<Account | null>(null);
   const [mode, setMode] = useState<'save' | 'signin' | 'reset'>('save');
@@ -91,7 +94,8 @@ export function AccountScreen() {
       keyboardShouldPersistTaps="handled"
       style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{
-        padding: 20,
+        ...centeredContent(layout, false),
+        padding: layout.gutter,
         paddingTop: insets.top + 16,
         paddingBottom: insets.bottom + 32,
         gap: 20,

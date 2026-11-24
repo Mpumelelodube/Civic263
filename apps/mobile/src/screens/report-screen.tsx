@@ -33,9 +33,12 @@ import { intakeEnabled } from '@/services/firebase';
 import { ReportPhotos } from '@/components/report-photos';
 import { ReportLocationField } from '@/components/report-location';
 import { motion, useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
 
 export function ReportScreen() {
   const theme = useTheme();
+  const layout = useLayout();
+  const wide = layout.columns >= 2;
   const insets = useSafeAreaInsets();
   const tabHeight = useBottomTabBarHeight();
   const keyboardVisible = useKeyboardState((state) => state.isVisible);
@@ -148,10 +151,13 @@ export function ReportScreen() {
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          padding: 20,
+          padding: layout.gutter,
           paddingTop: insets.top + 20,
           paddingBottom: footerHeight + 40,
           gap: 28,
+          width: '100%',
+          maxWidth: layout.wideContentMaxWidth + layout.gutter * 2,
+          alignSelf: 'center',
         }}
       >
         <View style={{ gap: 8 }}>
@@ -163,86 +169,98 @@ export function ReportScreen() {
             A service, a few details, a place and photos that help explain the issue.
           </AppText>
         </View>
-        <View style={{ gap: 12 }}>
-          <AppText variant="eyebrow" style={{ color: theme.muted }}>
-            01 / CHOOSE A SERVICE
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Service: ${categoryLabel(categoryId)}. Choose a service.`}
-            disabled={disabled}
-            onPress={() => {
-              Keyboard.dismiss();
-              setShowCategories(true);
-            }}
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? theme.tint : theme.surface,
-              borderRadius: 18,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-            })}
-          >
-            <IconBadge name={categoryId} />
-            <View style={{ flex: 1, gap: 3 }}>
-              <AppText variant="label">{categoryLabel(categoryId)}</AppText>
-              <AppText variant="caption" style={{ color: theme.muted }}>
-                Tap to change service
+        <View
+          style={{
+            flexDirection: wide ? 'row' : 'column',
+            alignItems: wide ? 'flex-start' : 'stretch',
+            gap: 28,
+          }}
+        >
+          <View style={{ flex: wide ? 1 : undefined, gap: 28 }}>
+            <View style={{ gap: 12 }}>
+              <AppText variant="eyebrow" style={{ color: theme.muted }}>
+                01 / CHOOSE A SERVICE
               </AppText>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Service: ${categoryLabel(categoryId)}. Choose a service.`}
+                disabled={disabled}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setShowCategories(true);
+                }}
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? theme.tint : theme.surface,
+                  borderRadius: 18,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 14,
+                })}
+              >
+                <IconBadge name={categoryId} />
+                <View style={{ flex: 1, gap: 3 }}>
+                  <AppText variant="label">{categoryLabel(categoryId)}</AppText>
+                  <AppText variant="caption" style={{ color: theme.muted }}>
+                    Tap to change service
+                  </AppText>
+                </View>
+                <AppIcon name="chevron" size={20} color={theme.muted} />
+              </Pressable>
             </View>
-            <AppIcon name="chevron" size={20} color={theme.muted} />
-          </Pressable>
-        </View>
-        <View style={{ gap: 16 }}>
-          <AppText variant="eyebrow" style={{ color: theme.muted }}>
-            02 / TELL US WHAT YOU SAW
-          </AppText>
-          <FormField
-            label="What needs attention?"
-            icon="edit"
-            hint="At least 10 characters. Leave out names and contact details."
-            minimum={10}
-            maxLength={1000}
-            multiline
-            value={description}
-            onChangeText={(text) => {
-              setDescription(text);
-              setError(null);
-            }}
-            placeholder="e.g. A deep pothole is blocking the left lane…"
-            editable={!disabled}
-          />
-        </View>
-        <View style={{ gap: 16 }}>
-          <AppText variant="eyebrow" style={{ color: theme.muted }}>
-            03 / ADD THE PLACE
-          </AppText>
-          <ReportLocationField
-            value={landmark}
-            location={location}
-            categoryId={categoryId}
-            onChangeText={(text) => {
-              setLandmark(text);
-              setError(null);
-            }}
-            onLocationChange={setLocation}
-            onBusyChange={setPreparingLocation}
-            disabled={disabled}
-          />
-        </View>
+            <View style={{ gap: 16 }}>
+              <AppText variant="eyebrow" style={{ color: theme.muted }}>
+                02 / TELL US WHAT YOU SAW
+              </AppText>
+              <FormField
+                label="What needs attention?"
+                icon="edit"
+                hint="At least 10 characters. Leave out names and contact details."
+                minimum={10}
+                maxLength={1000}
+                multiline
+                value={description}
+                onChangeText={(text) => {
+                  setDescription(text);
+                  setError(null);
+                }}
+                placeholder="e.g. A deep pothole is blocking the left lane…"
+                editable={!disabled}
+              />
+            </View>
+          </View>
+          <View style={{ flex: wide ? 1 : undefined, gap: 28 }}>
+            <View style={{ gap: 16 }}>
+              <AppText variant="eyebrow" style={{ color: theme.muted }}>
+                03 / ADD THE PLACE
+              </AppText>
+              <ReportLocationField
+                value={landmark}
+                location={location}
+                categoryId={categoryId}
+                onChangeText={(text) => {
+                  setLandmark(text);
+                  setError(null);
+                }}
+                onLocationChange={setLocation}
+                onBusyChange={setPreparingLocation}
+                disabled={disabled}
+              />
+            </View>
 
-        <View style={{ gap: 16 }}>
-          <AppText variant="eyebrow" style={{ color: theme.muted }}>
-            04 / ADD THE EVIDENCE
-          </AppText>
-          <ReportPhotos
-            photos={photos}
-            onChange={setPhotos}
-            disabled={disabled}
-            onBusyChange={setPreparingPhotos}
-            preserveRemovedPhotos={!!currentDraft.current}
-          />
+            <View style={{ gap: 16 }}>
+              <AppText variant="eyebrow" style={{ color: theme.muted }}>
+                04 / ADD THE EVIDENCE
+              </AppText>
+              <ReportPhotos
+                photos={photos}
+                onChange={setPhotos}
+                disabled={disabled}
+                onBusyChange={setPreparingPhotos}
+                preserveRemovedPhotos={!!currentDraft.current}
+              />
+            </View>
+          </View>
         </View>
         {locked && (
           <AppText style={{ color: theme.muted }}>
@@ -265,7 +283,8 @@ export function ReportScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            padding: 16,
+            paddingVertical: 16,
+            paddingHorizontal: Math.max(16, (layout.width - layout.wideContentMaxWidth) / 2),
             gap: 9,
             backgroundColor: theme.navigation,
             borderTopWidth: 1,

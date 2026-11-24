@@ -8,10 +8,13 @@ import { readMyVisit } from '@/services/community';
 import { AppText } from '@/components/app-text';
 import { ActionButton } from '@/components/action-button';
 import { useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
+import { centeredContent } from '@/layout';
 
 export function CommunityVisitScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const theme = useTheme();
+  const layout = useLayout();
   const insets = useSafeAreaInsets();
   const [visit, setVisit] = useState<Awaited<ReturnType<typeof readMyVisit>> | null>(null);
   const [error, setError] = useState(false);
@@ -40,7 +43,8 @@ export function CommunityVisitScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         contentContainerStyle={{
-          padding: 20,
+          ...centeredContent(layout, false),
+          padding: layout.gutter,
           paddingTop: insets.top + 16,
           gap: 20,
           paddingBottom: 40,

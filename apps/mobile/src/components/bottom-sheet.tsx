@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/app-icon';
 import { sheetSnap } from '@/components/sheet-snap';
 import { useAppReducedMotion } from '@/hooks/use-reduced-motion';
+import { adaptiveLayout } from '@/layout';
 import { useTheme } from '@/theme';
 
 // Keep React Native controls in a native Modal root; Compose-hosted scroll gestures crash in Expo Go 58.0.5.
@@ -29,9 +30,12 @@ export function BottomSheet({
   const theme = useTheme();
   const reduced = useAppReducedMotion();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
+  const layout = adaptiveLayout(width);
+  const sheetWidth =
+    layout.windowClass === 'compact' ? width : Math.min(layout.contentMaxWidth, width);
   const panelHeight = height - insets.top - 12;
-  const half = panelHeight * 0.42;
+  const half = panelHeight * (layout.windowClass === 'compact' ? 0.42 : 0.55);
   const [mounted, setMounted] = useState(isPresented);
   const [expanded, setExpanded] = useState(false);
   const y = useSharedValue(panelHeight);
@@ -139,8 +143,9 @@ export function BottomSheet({
             {
               position: 'absolute',
               top: insets.top + 12,
-              left: 0,
-              right: 0,
+              // Tablets and foldables: a centred sheet in a readable column, not edge to edge.
+              left: (width - sheetWidth) / 2,
+              width: sheetWidth,
               height: panelHeight,
               backgroundColor: theme.surface,
               borderTopLeftRadius: 26,

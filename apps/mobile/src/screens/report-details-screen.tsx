@@ -23,12 +23,15 @@ import { ReportResolution } from '@/components/report-resolution';
 import { CommunityActions } from '@/components/community-actions';
 import { CommunityHistory } from '@/components/community-history';
 import { useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
+import { centeredContent } from '@/layout';
 import { useAppReducedMotion } from '@/hooks/use-reduced-motion';
 import { loadReportDetail, type ReportDetail } from '@/services/report-detail';
 
 export function ReportDetailsScreen() {
   const { id, view } = useLocalSearchParams<{ id?: string; view?: 'owner' | 'public' }>();
   const theme = useTheme();
+  const layout = useLayout();
   const reduced = useAppReducedMotion();
   const insets = useSafeAreaInsets();
   const [detail, setDetail] = useState<ReportDetail | null>(null);
@@ -105,7 +108,8 @@ export function ReportDetailsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         contentContainerStyle={{
-          padding: 20,
+          ...centeredContent(layout, true),
+          padding: layout.gutter,
           paddingTop: insets.top + 16,
           paddingBottom: 40,
           gap: 20,

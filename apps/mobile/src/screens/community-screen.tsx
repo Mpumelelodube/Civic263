@@ -28,11 +28,14 @@ import {
 } from '@/services/community';
 import { readNearbyReports, invalidateNearbyReports } from '@/services/reports';
 import { useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
+import { centeredContent } from '@/layout';
 import { isAcceptanceBuild } from '@/services/field-test';
 import { applyCommunityPreferences, prepareCommunityPreferences } from '@/services/nearby-alerts';
 
 export function CommunityScreen() {
   const theme = useTheme();
+  const layout = useLayout();
   const insets = useSafeAreaInsets();
   const [testIdentity, setTestIdentity] = useState(false);
   const [tab, setTab] = useState<'nearby' | 'inbox' | 'visits'>('nearby');
@@ -193,7 +196,8 @@ export function CommunityScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         contentContainerStyle={{
-          padding: 20,
+          ...centeredContent(layout, true),
+          padding: layout.gutter,
           paddingTop: insets.top + 16,
           paddingBottom: 40,
           gap: 20,

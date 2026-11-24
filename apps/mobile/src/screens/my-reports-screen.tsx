@@ -17,9 +17,12 @@ import { intakeEnabled } from '@/services/firebase';
 import { listMyReports } from '@/services/reports';
 import { mergeResidentReports, reportHistoryRows } from '@/services/report-history';
 import { useTheme } from '@/theme';
+import { useLayout } from '@/hooks/use-layout';
+import { centeredContent } from '@/layout';
 
 export function MyReportsScreen() {
   const theme = useTheme();
+  const layout = useLayout();
   const insets = useSafeAreaInsets();
   const { savedId } = useLocalSearchParams<{ savedId?: string }>();
   const [drafts, setDrafts] = useState<ReportDraft[]>([]);
@@ -90,12 +93,16 @@ export function MyReportsScreen() {
   const saved = drafts.find((item) => item.id === savedId);
   return (
     <FlatList
+      key={layout.columns >= 2 ? 'two-columns' : 'one-column'}
+      numColumns={layout.columns >= 2 ? 2 : 1}
+      columnWrapperStyle={layout.columns >= 2 ? { gap: 16 } : undefined}
       data={rows}
       keyExtractor={(row) => `${row.kind}-${row.item.id}`}
       refreshing={loading}
       onRefresh={() => setReloadKey((value) => value + 1)}
       contentContainerStyle={{
-        padding: 20,
+        ...centeredContent(layout, true),
+        padding: layout.gutter,
         paddingTop: insets.top + 20,
         paddingBottom: 40,
         gap: 16,

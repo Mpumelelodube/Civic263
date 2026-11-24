@@ -3,14 +3,17 @@
     "name": "Civic263",
     "slug": "civic263",
     "version": "0.1.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "scheme": "civic263",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "co.zw.civic263.mobile"
+      "bundleIdentifier": "co.zw.civic263.mobile",
+      "supportsTablet": true,
+      "requireFullScreen": false
     },
     "android": {
       "predictiveBackGestureEnabled": false,
+      "resizeableActivity": true,
       "package": "co.zw.civic263.mobile"
     },
     "web": {
