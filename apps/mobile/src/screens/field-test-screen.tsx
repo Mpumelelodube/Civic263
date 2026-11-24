@@ -62,6 +62,9 @@ export function FieldTestScreen() {
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{
+        width: '100%',
+        maxWidth: 720,
+        alignSelf: 'center',
         padding: 20,
         paddingTop: insets.top + 16,
         paddingBottom: insets.bottom + 32,

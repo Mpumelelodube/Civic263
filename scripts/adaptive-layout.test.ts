@@ -1,59 +1,77 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { adaptiveLayout, windowClassFor } from '../apps/mobile/src/layout.ts';
+import {
+  adaptiveLayout,
+  navigationFor,
+  RAIL_WIDTH,
+  SIDEBAR_WIDTH,
+  windowClassFor,
+} from '../apps/mobile/src/layout.ts';
 
-test('phones stay single column with a bottom tab bar', () => {
+const inside = { insideNavigation: true };
+
+test('phones keep bottom tabs and a single column', () => {
   for (const width of [320, 360, 393, 430, 599]) {
-    const layout = adaptiveLayout(width);
+    const layout = adaptiveLayout(width, inside);
     assert.equal(layout.windowClass, 'compact');
+    assert.equal(layout.navigation, 'tabs');
+    assert.equal(layout.navWidth, 0);
     assert.equal(layout.columns, 1);
-    assert.equal(layout.sidePanel, false);
-    assert.equal(layout.navigationRail, false);
+    assert.equal(layout.listDetail, false);
+    assert.equal(layout.summaryColumn, false);
     assert.equal(layout.contentMaxWidth, width);
   }
 });
 
-test('iPad portrait, small tablets and unfolded foldables use two columns and a side panel', () => {
-  for (const width of [600, 744, 820, 834, 839]) {
-    const layout = adaptiveLayout(width);
-    assert.equal(layout.windowClass, 'medium');
-    assert.equal(layout.columns, 2);
-    assert.equal(layout.sidePanel, true);
-    assert.equal(layout.navigationRail, false);
-    assert.ok(layout.wideContentMaxWidth <= width);
-    assert.ok(layout.sidePanelWidth < width / 2);
+test('iPad portrait, iPad mini and unfolded foldables use a rail with list/detail', () => {
+  for (const width of [744, 820, 834, 884, 999]) {
+    const layout = adaptiveLayout(width, inside);
+    assert.equal(layout.navigation, 'rail');
+    assert.equal(layout.navWidth, RAIL_WIDTH);
+    assert.equal(layout.contentWidth, width - RAIL_WIDTH);
+    assert.equal(layout.listDetail, true);
   }
 });
 
-test('iPad landscape and large tablets get a navigation rail and wide content', () => {
-  for (const width of [840, 1024, 1180, 1366]) {
-    const layout = adaptiveLayout(width);
-    assert.equal(layout.windowClass, 'expanded');
-    assert.equal(layout.navigationRail, true);
-    assert.equal(layout.sidePanel, true);
-    assert.ok(layout.columns >= 2);
+test('iPad landscape and large tablets use a full sidebar', () => {
+  for (const width of [1024, 1133, 1180, 1366]) {
+    const layout = adaptiveLayout(width, inside);
+    assert.equal(layout.navigation, 'sidebar');
+    assert.equal(layout.navWidth, SIDEBAR_WIDTH);
+    assert.equal(layout.listDetail, true);
+    assert.equal(layout.summaryColumn, true);
   }
-  assert.equal(adaptiveLayout(1366).columns, 3);
-  assert.equal(adaptiveLayout(1024).columns, 2);
 });
 
-test('split-screen widths change class at the boundaries', () => {
+test('screens outside the tab navigator get the whole window', () => {
+  const layout = adaptiveLayout(1180);
+  assert.equal(layout.navWidth, 0);
+  assert.equal(layout.contentWidth, 1180);
+});
+
+test('size classes and navigation change at their boundaries', () => {
   assert.equal(windowClassFor(599), 'compact');
   assert.equal(windowClassFor(600), 'medium');
   assert.equal(windowClassFor(839), 'medium');
   assert.equal(windowClassFor(840), 'expanded');
+  assert.equal(navigationFor(599), 'tabs');
+  assert.equal(navigationFor(600), 'rail');
+  assert.equal(navigationFor(999), 'rail');
+  assert.equal(navigationFor(1000), 'sidebar');
 });
 
-test('the side panel never crowds out the map', () => {
-  for (const width of [600, 744, 834, 1024, 1366]) {
-    const layout = adaptiveLayout(width);
-    assert.ok(width - layout.sidePanelWidth >= width * 0.55);
+test('list/detail always leaves the detail pane at least 340 points', () => {
+  for (const width of [744, 820, 884, 1024, 1180, 1366]) {
+    const layout = adaptiveLayout(width, inside);
+    assert.ok(layout.listDetail);
+    assert.ok(layout.contentWidth - layout.listPaneWidth >= 340, `width ${width}`);
+    assert.ok(layout.listPaneWidth >= 300 && layout.listPaneWidth <= 400);
   }
 });
 
-test('the Community list pane leaves the detail pane at least 300 points', () => {
-  for (const width of [600, 744, 834, 1024, 1366]) {
-    const layout = adaptiveLayout(width);
-    assert.ok(width - (layout.sidePanelWidth + 40) >= 300, `width ${width}`);
+test('the map inspector never covers more than half of the map', () => {
+  for (const width of [744, 820, 1024, 1366]) {
+    const layout = adaptiveLayout(width, inside);
+    assert.ok(layout.listPaneWidth <= layout.contentWidth / 2 + 24, `width ${width}`);
   }
 });

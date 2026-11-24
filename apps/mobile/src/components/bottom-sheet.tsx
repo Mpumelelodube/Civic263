@@ -31,14 +31,19 @@ export function BottomSheet({
   const reduced = useAppReducedMotion();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const layout = adaptiveLayout(width);
-  const sheetWidth =
-    layout.windowClass === 'compact' ? width : Math.min(layout.contentMaxWidth, width);
-  const panelHeight = height - insets.top - 12;
-  const half = panelHeight * (layout.windowClass === 'compact' ? 0.42 : 0.55);
+  // Tablets and foldables: a centred form sheet (the iPad idiom), fully open, drag to dismiss.
+  // Phones: a bottom sheet with half and full resting positions.
+  const formSheet = adaptiveLayout(width).windowClass !== 'compact';
+  const sheetWidth = formSheet ? Math.min(560, width - 48) : width;
+  const panelHeight = formSheet
+    ? Math.min(height - insets.top - insets.bottom - 64, 760)
+    : height - insets.top - 12;
+  const top = formSheet ? (height - panelHeight) / 2 : insets.top + 12;
+  const half = formSheet ? 0 : panelHeight * 0.42;
+  const hidden = formSheet ? height - top : panelHeight;
   const [mounted, setMounted] = useState(isPresented);
   const [expanded, setExpanded] = useState(false);
-  const y = useSharedValue(panelHeight);
+  const y = useSharedValue(hidden);
   const start = useSharedValue(half);
   const scrim = useSharedValue(0);
   useEffect(() => {
@@ -50,7 +55,7 @@ export function BottomSheet({
     if (isPresented) {
       setMounted(true);
       setExpanded(false);
-      y.set(panelHeight);
+      y.set(hidden);
       y.set(
         withSpring(half, { duration: 300, dampingRatio: 1, reduceMotion: ReduceMotion.System }),
       );
@@ -58,12 +63,12 @@ export function BottomSheet({
     } else {
       scrim.set(withTiming(0, config));
       y.set(
-        withTiming(panelHeight, config, (finished) => {
+        withTiming(hidden, config, (finished) => {
           if (finished) scheduleOnRN(setMounted, false);
         }),
       );
     }
-  }, [isPresented, panelHeight, half, reduced, y, scrim]);
+  }, [isPresented, hidden, half, reduced, y, scrim]);
   const panelStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrim.get() }));
   function toggle() {
@@ -142,14 +147,17 @@ export function BottomSheet({
           style={[
             {
               position: 'absolute',
-              top: insets.top + 12,
-              // Tablets and foldables: a centred sheet in a readable column, not edge to edge.
+              top,
               left: (width - sheetWidth) / 2,
               width: sheetWidth,
               height: panelHeight,
               backgroundColor: theme.surface,
               borderTopLeftRadius: 26,
               borderTopRightRadius: 26,
+              borderBottomLeftRadius: formSheet ? 26 : 0,
+              borderBottomRightRadius: formSheet ? 26 : 0,
+              borderCurve: 'continuous',
+              boxShadow: formSheet ? theme.shadowOverlay : undefined,
               overflow: 'hidden',
             },
             panelStyle,
@@ -158,8 +166,12 @@ export function BottomSheet({
           <GestureDetector gesture={pan}>
             <View style={{ height: 52, flexDirection: 'row', alignItems: 'center' }}>
               <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={expanded ? 'Collapse sheet' : 'Expand sheet'}
+                accessibilityRole={formSheet ? undefined : 'button'}
+                accessibilityLabel={
+                  formSheet ? undefined : expanded ? 'Collapse sheet' : 'Expand sheet'
+                }
+                accessible={!formSheet}
+                disabled={formSheet}
                 onPress={toggle}
                 style={{
                   flex: 1,
@@ -185,7 +197,9 @@ export function BottomSheet({
           </GestureDetector>
           <View
             style={{
-              height: Math.max(120, panelHeight - (expanded ? 0 : half) - 52 - insets.bottom),
+              height: formSheet
+                ? panelHeight - 52
+                : Math.max(120, panelHeight - (expanded ? 0 : half) - 52 - insets.bottom),
             }}
           >
             {children}

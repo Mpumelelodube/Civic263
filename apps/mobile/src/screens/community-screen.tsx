@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, View } from 'react-native';
+import { ActivityIndicator, AppState, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -28,7 +28,8 @@ import {
   saveCommunityPreferences,
 } from '@/services/community';
 import { readNearbyReports, invalidateNearbyReports } from '@/services/reports';
-import { useTheme } from '@/theme';
+import { radius, spacing, useTheme } from '@/theme';
+import { EmptyPane, ListRow, PaneHeader, Segmented, SummaryStrip } from '@/components/pane';
 import { useLayout } from '@/hooks/use-layout';
 import { centeredContent } from '@/layout';
 import { isAcceptanceBuild } from '@/services/field-test';
@@ -55,7 +56,7 @@ export function CommunityScreen() {
   const [settings, setSettings] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Tablets and foldables: the list stays on the left and the selected issue opens beside it.
-  const split = layout.sidePanel;
+  const split = layout.listDetail;
   function openIssue(id: string) {
     if (split) setSelectedId(id);
     else router.push({ pathname: '/report-details', params: { id, view: 'public' } });
@@ -200,21 +201,336 @@ export function CommunityScreen() {
     (item) => item.communityResolution?.status === 'awaiting-confirmation',
   );
   const options = preferences ?? DEFAULT_COMMUNITY_PREFERENCES;
-  return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: split ? 'row' : 'column',
-        backgroundColor: theme.background,
+  const preferencesSheet = (
+    <BottomSheet
+      isPresented={settings}
+      onDismiss={() => {
+        if (!busy) setSettings(false);
       }}
     >
+      <ScrollView contentContainerStyle={{ padding: 24, gap: 20, paddingBottom: 48 }}>
+        <AppText variant="heading">Your community preferences</AppText>
+        <AppText style={{ color: theme.muted }}>
+          Choose how you want to help. Nearby prompts are invitations; you can dismiss them or pause
+          at any time.
+        </AppText>
+        {(
+          [
+            [
+              'reviewer',
+              'Volunteer reviewing',
+              'Confirm or reject fixes after a new on-site visit.',
+            ],
+            [
+              'nearbyAlerts',
+              'Nearby reminders',
+              'Get a prompt near published defects and fixes awaiting review.',
+            ],
+            [
+              'backgroundAlerts',
+              'Remind me in the background',
+              'Allow location-based prompts when Civic263 is not open.',
+            ],
+            ['pushUpdates', 'Push updates', 'Receive fix and review updates for your reports.'],
+          ] as const
+        ).map(([key, label, description]) => (
+          <View
+            key={key}
+            style={{ gap: 8, paddingVertical: 10, borderTopWidth: 1, borderColor: theme.border }}
+          >
+            <AppText variant="label">
+              {label}: {options[key] ? 'On' : 'Off'}
+            </AppText>
+            <AppText variant="caption" style={{ color: theme.muted }}>
+              {description}
+            </AppText>
+            <ActionButton
+              label={
+                options[key] ? `Pause ${label.toLowerCase()}` : `Enable ${label.toLowerCase()}`
+              }
+              icon={key === 'pushUpdates' ? 'bell' : key === 'reviewer' ? 'check' : 'locate'}
+              variant="secondary"
+              disabled={busy || loading || !preferences}
+              onPress={() =>
+                void changePreferences({
+                  ...options,
+                  [key]: !options[key],
+                  ...(key === 'nearbyAlerts' && options.nearbyAlerts
+                    ? { backgroundAlerts: false }
+                    : {}),
+                  ...(key === 'backgroundAlerts' && !options.backgroundAlerts
+                    ? { nearbyAlerts: true }
+                    : {}),
+                })
+              }
+            />
+          </View>
+        ))}
+        {notice && <AppText style={{ color: theme.muted }}>{notice}</AppText>}
+        {error && (
+          <AppText accessibilityRole="alert" style={{ color: theme.error }}>
+            {error}
+          </AppText>
+        )}
+        <ActionButton
+          label="Done"
+          icon="check"
+          variant="ghost"
+          disabled={busy}
+          onPress={() => setSettings(false)}
+        />
+      </ScrollView>
+    </BottomSheet>
+  );
+  if (split) {
+    // Tablets and foldables: the review queue on the left, the chosen issue open beside it.
+    const unread = inbox.filter((item) => !item.readAt).length;
+    const queue = [
+      ...pending,
+      ...issues.filter((item) => item.communityResolution?.status !== 'awaiting-confirmation'),
+    ];
+    return (
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: theme.background }}>
+        <View
+          style={{
+            width: layout.listPaneWidth,
+            backgroundColor: theme.navigation,
+            borderRightWidth: StyleSheet.hairlineWidth,
+            borderRightColor: theme.border,
+          }}
+        >
+          <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={{
+              padding: spacing.lg,
+              paddingTop: insets.top + spacing.xxl,
+              paddingBottom: insets.bottom + 40,
+              gap: spacing.lg,
+            }}
+          >
+            <PaneHeader
+              eyebrow="COMMUNITY"
+              title="Reviews"
+              subtitle="Check reported fixes near you. A fix stays on the map until a different resident confirms it on site."
+            />
+            <SummaryStrip
+              items={[
+                { label: 'Awaiting check', value: searched ? pending.length : '–' },
+                { label: 'Unread', value: unread },
+                { label: 'Your visits', value: visits.length },
+              ]}
+            />
+            {preferences && (
+              <View
+                style={{
+                  gap: spacing.sm,
+                  padding: spacing.lg,
+                  borderRadius: radius.lg,
+                  borderCurve: 'continuous',
+                  backgroundColor: theme.surface,
+                }}
+              >
+                <AppText variant="label">
+                  {preferences.reviewer
+                    ? 'You are a community reviewer'
+                    : 'Volunteer to review local fixes'}
+                </AppText>
+                <AppText variant="caption" style={{ color: theme.muted }}>
+                  Each visit needs a current on-site location and new camera photos.
+                </AppText>
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <ActionButton
+                    label={preferences.reviewer ? 'Pause reviewing' : 'Join reviewers'}
+                    icon="check"
+                    variant="secondary"
+                    disabled={busy || loading}
+                    style={{ flex: 1 }}
+                    onPress={() =>
+                      void changePreferences({ ...preferences, reviewer: !preferences.reviewer })
+                    }
+                  />
+                  <ActionButton
+                    label="Preferences"
+                    icon="settings"
+                    variant="ghost"
+                    disabled={busy || loading}
+                    onPress={() => setSettings(true)}
+                  />
+                </View>
+              </View>
+            )}
+            {isAcceptanceBuild && (
+              <ActionButton
+                label={
+                  testIdentity ? 'Private background field test' : 'Show test account reference'
+                }
+                icon={testIdentity ? 'locate' : 'lock'}
+                variant="ghost"
+                onPress={() => router.push(testIdentity ? '/field-test' : '/account')}
+              />
+            )}
+            <Segmented
+              accessibilityLabel="Community view"
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'nearby', label: 'Nearby' },
+                { value: 'inbox', label: unread ? `Inbox (${unread})` : 'Inbox' },
+                { value: 'visits', label: 'Visits' },
+              ]}
+            />
+            {error && (
+              <AppText accessibilityRole="alert" selectable style={{ color: theme.error }}>
+                {error}
+              </AppText>
+            )}
+            {notice && <AppText style={{ color: theme.muted }}>{notice}</AppText>}
+            {tab === 'nearby' && (
+              <View style={{ gap: spacing.md }}>
+                <ActionButton
+                  label={searched ? 'Refresh nearby checks' : 'Find checks near me'}
+                  icon="locate"
+                  busy={busy}
+                  onPress={() => void nearby()}
+                />
+                {!searched && (
+                  <AppText variant="caption" style={{ color: theme.muted }}>
+                    Uses your current location to find published issues within 5 km.
+                  </AppText>
+                )}
+                {searched && !issues.length && (
+                  <AppText style={{ color: theme.muted }}>
+                    No active published issues were found in this area.
+                  </AppText>
+                )}
+                {truncated && (
+                  <AppText variant="caption" style={{ color: theme.muted }}>
+                    This area has more reports than can be loaded at once.
+                  </AppText>
+                )}
+                <View style={{ gap: 2 }}>
+                  {queue.map((item) => (
+                    <ListRow
+                      key={item.id}
+                      icon={item.categoryId}
+                      title={item.title}
+                      status={
+                        item.communityResolution?.status === 'awaiting-confirmation'
+                          ? 'Fix reported · needs a second look'
+                          : workflowLabel(item)
+                      }
+                      meta={`${categoryLabel(item.categoryId)} · ${item.area}`}
+                      selected={selectedId === item.id}
+                      onPress={() => openIssue(item.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+            {tab === 'inbox' && (
+              <View style={{ gap: 2 }}>
+                {loading && !inbox.length ? (
+                  <ActivityIndicator color={theme.accent} />
+                ) : !inbox.length ? (
+                  <AppText style={{ color: theme.muted }}>
+                    No updates yet. Fix reports and community reviews of your issues appear here.
+                  </AppText>
+                ) : (
+                  inbox.map((item) => (
+                    <ListRow
+                      key={item.id}
+                      icon="bell"
+                      title={FIELD_CHECK_LABELS[item.kind]}
+                      {...(item.readAt ? {} : { status: 'New' })}
+                      meta={`${item.reference} · ${new Date(item.createdAt).toLocaleDateString()}`}
+                      selected={selectedId === item.reportId}
+                      onPress={() => void openNotification(item)}
+                    />
+                  ))
+                )}
+                {inboxCursor && (
+                  <ActionButton
+                    label="More updates"
+                    icon="arrow"
+                    variant="ghost"
+                    busy={busy}
+                    onPress={() => void more()}
+                  />
+                )}
+              </View>
+            )}
+            {tab === 'visits' && (
+              <View style={{ gap: 2 }}>
+                {loading && !visits.length ? (
+                  <ActivityIndicator color={theme.accent} />
+                ) : !visits.length ? (
+                  <AppText style={{ color: theme.muted }}>
+                    Your site visits appear here after you report or review a fix.
+                  </AppText>
+                ) : (
+                  visits.map((item) => (
+                    <ListRow
+                      key={item.id}
+                      icon="photos"
+                      title={FIELD_CHECK_LABELS[item.kind]}
+                      status={`${item.ownPhotoCount} private visit photos`}
+                      meta={`${item.reference} · ${new Date(item.createdAt).toLocaleDateString()}`}
+                      onPress={() =>
+                        router.push({ pathname: '/community-visit', params: { id: item.id } })
+                      }
+                    />
+                  ))
+                )}
+                {visitCursor && (
+                  <ActionButton
+                    label="More visits"
+                    icon="arrow"
+                    variant="ghost"
+                    busy={busy}
+                    onPress={() => void more()}
+                  />
+                )}
+              </View>
+            )}
+            <ActionButton
+              label="Refresh updates"
+              icon="retry"
+              variant="ghost"
+              disabled={loading || busy}
+              onPress={() => void load()}
+            />
+          </ScrollView>
+        </View>
+        <View style={{ flex: 1 }}>
+          {selectedId ? (
+            <ReportDetailsView key={selectedId} id={selectedId} view="public" embedded />
+          ) : (
+            <EmptyPane
+              icon="reviews"
+              title="Select an issue to review"
+              body="Choose a nearby check or an inbox update. The issue, its photos and any reported fix open here, so you can review without losing your place in the list."
+            >
+              {tab === 'nearby' && !searched && (
+                <ActionButton
+                  label="Find checks near me"
+                  icon="locate"
+                  busy={busy}
+                  onPress={() => void nearby()}
+                />
+              )}
+            </EmptyPane>
+          )}
+        </View>
+        {preferencesSheet}
+      </View>
+    );
+  }
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
-        style={
-          split ? { flexGrow: 0, flexShrink: 0, width: layout.sidePanelWidth + 40 } : undefined
-        }
         contentContainerStyle={{
-          ...(split ? {} : centeredContent(layout, true)),
-          padding: split ? 16 : layout.gutter,
+          ...centeredContent(layout, true),
+          padding: layout.gutter,
           paddingTop: insets.top + 16,
           paddingBottom: 40,
           gap: 20,
@@ -355,9 +671,6 @@ export function CommunityScreen() {
                   paddingVertical: 16,
                   borderTopWidth: 1,
                   borderColor: theme.border,
-                  ...(split && selectedId === item.id
-                    ? { backgroundColor: theme.tint, paddingHorizontal: 12, borderRadius: 12 }
-                    : {}),
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -473,118 +786,7 @@ export function CommunityScreen() {
           </>
         )}
       </ScrollView>
-      {split && (
-        <View
-          style={{
-            flex: 1,
-            borderLeftWidth: 1,
-            borderLeftColor: theme.border,
-            backgroundColor: theme.background,
-          }}
-        >
-          {selectedId ? (
-            <ReportDetailsView key={selectedId} id={selectedId} view="public" embedded />
-          ) : (
-            <View
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 32,
-                gap: 12,
-              }}
-            >
-              <IconBadge name="nearby" size={64} />
-              <AppText variant="heading" style={{ textAlign: 'center' }}>
-                Select an issue to review
-              </AppText>
-              <AppText style={{ color: theme.muted, textAlign: 'center' }}>
-                Choose a nearby check or an inbox update on the left. The issue, its photos and any
-                reported fix open here.
-              </AppText>
-            </View>
-          )}
-        </View>
-      )}
-      <BottomSheet
-        isPresented={settings}
-        onDismiss={() => {
-          if (!busy) setSettings(false);
-        }}
-      >
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 20, paddingBottom: 48 }}>
-          <AppText variant="heading">Your community preferences</AppText>
-          <AppText style={{ color: theme.muted }}>
-            Choose how you want to help. Nearby prompts are invitations; you can dismiss them or
-            pause at any time.
-          </AppText>
-          {(
-            [
-              [
-                'reviewer',
-                'Volunteer reviewing',
-                'Confirm or reject fixes after a new on-site visit.',
-              ],
-              [
-                'nearbyAlerts',
-                'Nearby reminders',
-                'Get a prompt near published defects and fixes awaiting review.',
-              ],
-              [
-                'backgroundAlerts',
-                'Remind me in the background',
-                'Allow location-based prompts when Civic263 is not open.',
-              ],
-              ['pushUpdates', 'Push updates', 'Receive fix and review updates for your reports.'],
-            ] as const
-          ).map(([key, label, description]) => (
-            <View
-              key={key}
-              style={{ gap: 8, paddingVertical: 10, borderTopWidth: 1, borderColor: theme.border }}
-            >
-              <AppText variant="label">
-                {label}: {options[key] ? 'On' : 'Off'}
-              </AppText>
-              <AppText variant="caption" style={{ color: theme.muted }}>
-                {description}
-              </AppText>
-              <ActionButton
-                label={
-                  options[key] ? `Pause ${label.toLowerCase()}` : `Enable ${label.toLowerCase()}`
-                }
-                icon={key === 'pushUpdates' ? 'bell' : key === 'reviewer' ? 'check' : 'locate'}
-                variant="secondary"
-                disabled={busy || loading || !preferences}
-                onPress={() =>
-                  void changePreferences({
-                    ...options,
-                    [key]: !options[key],
-                    ...(key === 'nearbyAlerts' && options.nearbyAlerts
-                      ? { backgroundAlerts: false }
-                      : {}),
-                    ...(key === 'backgroundAlerts' && !options.backgroundAlerts
-                      ? { nearbyAlerts: true }
-                      : {}),
-                  })
-                }
-              />
-            </View>
-          ))}
-          {notice && <AppText style={{ color: theme.muted }}>{notice}</AppText>}
-          {error && (
-            <AppText accessibilityRole="alert" style={{ color: theme.error }}>
-              {error}
-            </AppText>
-          )}
-          <ActionButton
-            label="Done"
-            icon="check"
-            variant="ghost"
-            disabled={busy}
-            onPress={() => setSettings(false)}
-          />
-        </ScrollView>
-      </BottomSheet>
+      {preferencesSheet}
     </View>
   );
 }

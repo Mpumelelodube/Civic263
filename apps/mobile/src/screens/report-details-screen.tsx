@@ -127,7 +127,7 @@ export function ReportDetailsView({
       <ScrollView
         contentContainerStyle={{
           ...centeredContent(layout, true),
-          padding: layout.gutter,
+          padding: embedded ? 20 : layout.gutter,
           paddingTop: embedded ? 20 : insets.top + 16,
           paddingBottom: 40,
           gap: 20,
@@ -286,14 +286,20 @@ export function ReportDetailsView({
                 {photos.map((uri, index) => (
                   <Pressable
                     key={index}
-                    style={{ width: '47%' }}
+                    // Two-pane pages lead with a large first photo and a row of thumbnails.
+                    style={{ width: twoPane ? (index === 0 ? '100%' : '31.5%') : '47%' }}
                     accessibilityRole="button"
                     accessibilityLabel={`Open report photo ${index + 1}`}
                     onPress={() => setImage(uri)}
                   >
                     <Image
                       source={{ uri }}
-                      style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
+                      style={{
+                        width: '100%',
+                        aspectRatio: twoPane && index === 0 ? 4 / 3 : 1,
+                        borderRadius: 14,
+                        borderCurve: 'continuous',
+                      }}
                       contentFit="cover"
                       cachePolicy={detail.kind === 'owner' ? 'none' : 'memory-disk'}
                       accessibilityLabel={`Report photo ${index + 1}`}

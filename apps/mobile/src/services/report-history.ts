@@ -21,3 +21,20 @@ export function reportHistoryRows(drafts: ReportDraft[], reports: ResidentReport
       : (row.item.receipt?.receivedAt ?? row.item.updatedAt);
   return rows.sort((left, right) => Date.parse(timestamp(right)) - Date.parse(timestamp(left)));
 }
+
+export type ReportGroup = 'drafts' | 'submitted' | 'resolved';
+/** Which status filter a row belongs to in My reports. */
+export function reportGroup(row: ReportHistoryRow): ReportGroup {
+  if (row.kind === 'draft') return row.item.receipt ? 'submitted' : 'drafts';
+  return row.item.workflowStatus === 'resolved' ? 'resolved' : 'submitted';
+}
+export function countReportGroups(rows: ReportHistoryRow[]) {
+  const counts: Record<ReportGroup | 'all', number> = {
+    all: rows.length,
+    drafts: 0,
+    submitted: 0,
+    resolved: 0,
+  };
+  for (const row of rows) counts[reportGroup(row)] += 1;
+  return counts;
+}
