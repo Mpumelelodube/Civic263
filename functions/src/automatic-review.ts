@@ -240,8 +240,9 @@ export async function reviewSubmittedReport(reportId: string, assess = checkRepo
   });
   if (!item) return;
   let stage = 'private-photos';
+  const bucket = getStorage().bucket();
+  const written: string[] = [];
   try {
-    const bucket = getStorage().bucket();
     const photos: Buffer[] = [];
     for (const path of item.rawMediaPaths as string[]) {
       if (!path.startsWith(`private/reports/${item.ownerUid}/${reportId}/`))
@@ -258,10 +259,12 @@ export async function reviewSubmittedReport(reportId: string, assess = checkRepo
           .resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true })
           .jpeg({ quality: 75 })
           .toBuffer();
-        await bucket.file(`public/incidents/${reportId}/${publicIndex}.jpg`).save(bytes, {
+        const path = `public/incidents/${reportId}/${publicIndex}.jpg`;
+        await bucket.file(path).save(bytes, {
           resumable: false,
           metadata: { contentType: 'image/jpeg', cacheControl: 'private, no-store' },
         });
+        written.push(path);
       }
     }
     const now = new Date().toISOString();
@@ -339,6 +342,17 @@ export async function reviewSubmittedReport(reportId: string, assess = checkRepo
         });
       return item.attempts < 5;
     });
+    if (written.length) {
+      const current = (await ref.get()).data();
+      // A withdrawn or erased report can never be published, so its derivatives are orphans.
+      if (
+        !current ||
+        (current.moderationStatus !== 'pending' && current.publicationStatus !== 'published')
+      )
+        await Promise.all(
+          written.map((path) => bucket.file(path).delete({ ignoreNotFound: true })),
+        ).catch(() => logError('Unused review derivatives remain', { reportId }));
+    }
     if (retry) throw new Error('Automatic review needs a retry');
   }
 }

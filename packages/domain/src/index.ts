@@ -9,5 +9,6 @@ export * from './resident-reports.ts';
 export * from './report-resolution.ts';
 export * from './community.ts';
 export * from './review-reminders.ts';
+export * from './account-lifecycle.ts';
 
 export * from './field-test.ts';

@@ -91,7 +91,9 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
       retry = report.attempts < 5;
     }
   }
+  let adopted = false;
   await db.runTransaction(async (transaction) => {
+    adopted = false;
     const incidentRef = db.collection('incidents').doc(reportId);
     const publicRef = db.collection('publicIncidents').doc(reportId);
     const [current, canonical, published] = await Promise.all([
@@ -137,6 +139,7 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
         publicationVersion: updated.publicationVersion,
       });
       transaction.set(publicRef, toPublicIncident(updated)!);
+      adopted = safeCount > 0;
     }
     transaction.update(ref, { resolution, resolutionReviewUntil: 0 });
     transaction.set(db.collection('reviewAudit').doc(`${reportId}_resolution_${REVIEW_POLICY}`), {
@@ -148,5 +151,16 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
       reviewedAt: new Date().toISOString(),
     });
   });
+  // A batch the record never referenced (withdrawn, erased or superseded) is removed by exact
+  // name; the backend role cannot list objects.
+  if (safeCount && !adopted)
+    await Promise.all(
+      Array.from({ length: safeCount }, (_, index) =>
+        getStorage()
+          .bucket()
+          .file(`public/incidents/${reportId}/resolution/${lease}/${index}.jpg`)
+          .delete({ ignoreNotFound: true }),
+      ),
+    ).catch(() => {});
   if (retry) throw new Error('Resolution review needs a retry');
 }

@@ -14,6 +14,12 @@ import { fieldTestCommand } from './field-test.ts';
 import { reviewResolutionEvidence } from './resolution-review.ts';
 import { reviewFieldEvidence } from './field-evidence-review.ts';
 import { deliverCommunityNotifications } from './community-notifications.ts';
+import {
+  assertAccountActive,
+  correctReport,
+  deleteResidentAccount,
+  withdrawReport,
+} from './account-lifecycle.ts';
 
 initializeApp();
 setGlobalOptions({
@@ -44,6 +50,9 @@ export const reviewResolution = onDocumentCreated(
   async (event) => {
     if (event.data?.data().event === 'resident-resolved')
       await reviewResolutionEvidence(event.data.data().reportId);
+    // A corrected report goes back through the same automatic publication review.
+    if (event.data?.data().event === 'resident-corrected')
+      await reviewSubmittedReport(event.data.data().reportId);
     if (event.data?.data().event === 'community-field-check') {
       const data = event.data.data();
       const results = await Promise.allSettled([
@@ -113,6 +122,13 @@ export const submitReport = onCall(
   },
   async (request) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in before sending a report.');
+    if (request.data?.action === 'delete-account')
+      return deleteResidentAccount(request.data, request.auth.uid);
+    await assertAccountActive(request.auth.uid);
+    if (request.data?.action === 'withdraw-report')
+      return withdrawReport(request.data, request.auth.uid);
+    if (request.data?.action === 'correct-report')
+      return correctReport(request.data, request.auth.uid);
     const fieldTester =
       request.auth.token.civic263Test === true &&
       typeof request.auth.token.civic263FieldTestUntil === 'number' &&

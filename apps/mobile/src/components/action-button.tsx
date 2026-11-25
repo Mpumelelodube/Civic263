@@ -19,7 +19,8 @@ export function ActionButton({
   label: string;
   icon?: IconName;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  /** `destructive` is for irreversible actions; always pair it with a confirmation alert. */
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive';
   busy?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -29,7 +30,8 @@ export function ActionButton({
   const reduced = useAppReducedMotion();
   const [pressed, setPressed] = useState(false);
   const unavailable = disabled || busy;
-  const color = variant === 'primary' ? theme.onAccent : theme.accent;
+  const color =
+    variant === 'primary' ? theme.onAccent : variant === 'destructive' ? theme.error : theme.accent;
   return (
     <Pressable
       testID={testID}
@@ -59,6 +61,8 @@ export function ActionButton({
               : variant === 'secondary'
                 ? theme.tint
                 : 'transparent',
+          // A hairline keeps an irreversible action distinct from neutral ghost buttons.
+          ...(variant === 'destructive' ? { boxShadow: `inset 0 0 0 1px ${theme.error}` } : {}),
           opacity: disabled ? 0.5 : pressed ? 0.88 : 1,
           transform: [{ scale: pressed && !reduced ? 0.97 : 1 }],
           transitionProperty: ['transform', 'opacity'],

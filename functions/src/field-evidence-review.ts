@@ -75,7 +75,9 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
       retry = data.attempts < 5;
     }
   }
+  let adopted = false;
   await db.runTransaction(async (transaction) => {
+    adopted = false;
     const publicRef = db.collection('publicFieldChecks').doc(checkId);
     const [current, published, incident] = await Promise.all([
       transaction.get(ref),
@@ -89,6 +91,7 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
       return;
     }
     const evidenceStatus = safeCount ? 'published' : 'private';
+    adopted = safeCount > 0;
     transaction.update(ref, {
       evidenceStatus,
       photoCount: safeCount,
@@ -107,5 +110,16 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
       reviewedAt: new Date().toISOString(),
     });
   });
+  // A batch the check never referenced (withdrawn, erased or superseded) is removed by exact
+  // name; the backend role cannot list objects.
+  if (safeCount && !adopted)
+    await Promise.all(
+      Array.from({ length: safeCount }, (_, index) =>
+        getStorage()
+          .bucket()
+          .file(`public/incidents/${data.reportId}/field-checks/${checkId}/${lease}/${index}.jpg`)
+          .delete({ ignoreNotFound: true }),
+      ),
+    ).catch(() => {});
   if (retry) throw new Error('Visit privacy review needs a retry');
 }

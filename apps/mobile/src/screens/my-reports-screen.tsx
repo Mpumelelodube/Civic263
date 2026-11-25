@@ -33,11 +33,13 @@ import { centeredContent } from '@/layout';
 const rowKey = (row: ReportHistoryRow) => `${row.kind}-${row.item.id}`;
 function statusLabel(row: ReportHistoryRow) {
   if (row.kind === 'cloud')
-    return ['resolved', 'resolution-pending'].includes(row.item.workflowStatus)
-      ? `${workflowLabel(row.item, true)}${row.item.testOnly ? ' / TEST ONLY' : ''}`
-      : row.item.testOnly
-        ? 'Test server only - no real report filed'
-        : REVIEW_LABELS[row.item.reviewStatus];
+    return row.item.withdrawal
+      ? 'Withdrawn by you'
+      : ['resolved', 'resolution-pending'].includes(row.item.workflowStatus)
+        ? `${workflowLabel(row.item, true)}${row.item.testOnly ? ' / TEST ONLY' : ''}`
+        : row.item.testOnly
+          ? 'Test server only - no real report filed'
+          : REVIEW_LABELS[row.item.reviewStatus];
   return row.item.receipt
     ? row.item.receipt.testOnly
       ? 'Test server only'

@@ -64,6 +64,7 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="report-details" />
+            <Stack.Screen name="report-correction" />
             <Stack.Screen name="community-visit" />
             <Stack.Screen name="account" />
             <Stack.Screen name="field-test" />

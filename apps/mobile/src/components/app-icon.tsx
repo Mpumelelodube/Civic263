@@ -37,6 +37,8 @@ const symbols = {
   edit: { ios: 'text.alignleft', android: 'notes', web: 'notes' },
   retry: { ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' },
   warning: { ios: 'exclamationmark.triangle', android: 'warning', web: 'warning' },
+  withdraw: { ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' },
+  erase: { ios: 'trash', android: 'delete_forever', web: 'delete_forever' },
   roads: { ios: 'road.lanes', android: 'add_road', web: 'add_road' },
   'traffic-lights': { ios: 'light.beacon.max', android: 'traffic', web: 'traffic' },
   'road-signs': { ios: 'signpost.right', android: 'signpost', web: 'signpost' },

@@ -30,6 +30,25 @@ Resolution acceptance on 12 November 2026 covered owner/non-owner access, stable
 
 Mobile nearby and public-detail reads request cache revalidation so a recently resolved report is not restored from the device's HTTP cache after its local nearby cache is invalidated.
 
+## Withdrawal, correction and account deletion (P01, not yet deployed)
+
+Three more strict actions use the existing `submitReport` callable, so no new HTTP invoker grant is needed. The rules are in [the account lifecycle spec](ACCOUNT_LIFECYCLE_SPEC.md).
+
+- `withdraw-report`: owner only and idempotent. It erases the report's text, place text and photos at once. A published issue leaves the register, and its public photos are deleted, unless another resident has recorded a fix check; then it stays with a withdrawal notice and without the reporter's material.
+- `correct-report`: unpublished reports only, at most three times. It carries the revision it was based on, overwrites the earlier version, deletes removed photos and writes a private `resident-corrected` event, which the `reviewResolution` worker turns into a fresh automatic review.
+- `delete-account`: erases or de-identifies every identity-linked record and private original, keeps anonymous published issues and fix checks, then deletes the Auth user. Each call works within a time budget and reports `partial` or `complete`; the app repeats it until complete. A hashed `accountDeletions` marker (30-day TTL, the seventh TTL policy) makes `submitReport` refuse a deleted identity's still-valid ID token.
+
+Review workers now delete derivative batches that their record never adopted. A review racing a withdrawal or erasure therefore leaves no public photos behind. All of these deletions use exact object names, because the backend photo role deliberately has no `storage.objects.list`. Unreferenced uploads from abandoned attempts are left for the operator orphan cleanup (P03). `npm run test:lifecycle` covers these paths against demo emulators, including through the built callable.
+
+Deployment prerequisites, in order:
+
+1. Approve and bind `firebase/iam/backend-account-deletion-role.yaml` (only `firebaseauth.users.delete`) to `civic263-backend`. Without it, deletion erases the data but cannot remove the Auth user, and it reports an error the app retries.
+2. Deploy Firestore indexes, for the `accountDeletions` TTL override.
+3. Deploy Functions.
+4. Ship the updated app.
+
+Older app builds cannot send these commands; nothing else changes for them.
+
 ## Backend dependency maintenance - 12 November 2026
 
 The pre-deployment production audit found high-severity advisories in the existing image and request parsers. Sharp is now pinned to 0.35.5 and the deployed Functions package pins body-parser 2.4.0 through its override. These versions address the [Sharp native decoder advisories](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) and [body-parser compressed-request denial of service](https://github.com/advisories/GHSA-27r3-jxmh-p828). JPEG validation, metadata removal and the publication/resolution integration checks passed with the updated image library.

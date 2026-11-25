@@ -1,16 +1,20 @@
 import { useCallback, useState } from 'react';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Modal, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import {
+  canCorrectReport,
   categoryLabel,
   HANDOFF_LABELS,
   REVIEW_LABELS,
   REVIEW_REASONS,
+  WITHDRAWAL_LABELS,
   workflowLabel,
   type FieldCheckKind,
+  type ResidentReport,
 } from '@civic263/domain';
+import { withdrawMyReport } from '@/services/account-lifecycle';
 import { AppText } from '@/components/app-text';
 import { ActionButton, IconBadge } from '@/components/action-button';
 import {
@@ -61,12 +65,46 @@ export function ReportDetailsView({
     fixId?: string;
   } | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [manageError, setManageError] = useState<string | null>(null);
+  const busy = resolving || withdrawing;
+  const withdraw = (report: ResidentReport) => {
+    const published = report.publicationStatus === 'published';
+    Alert.alert(
+      'Withdraw this report?',
+      published
+        ? 'It will be removed from the public register and map, and its description, place and photos will be erased. If other residents have recorded checks on this issue, it stays public without your description or photos. This cannot be undone.'
+        : 'Its description, place and photos will be erased and it will never be published. This cannot be undone.',
+      [
+        { text: 'Keep report', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: () => {
+            setWithdrawing(true);
+            setManageError(null);
+            withdrawMyReport(report.id)
+              .then(() => setVersion((value) => value + 1))
+              .catch((reason: unknown) =>
+                setManageError(
+                  reason instanceof Error && reason.message
+                    ? reason.message
+                    : 'Could not withdraw this report. Check your connection and retry.',
+                ),
+              )
+              .finally(() => setWithdrawing(false));
+          },
+        },
+      ],
+    );
+  };
   useFocusEffect(
     useCallback(() => {
       let active = true;
       const abort = new AbortController();
       const timeout = setTimeout(() => abort.abort(), 20000);
       setError(null);
+      setManageError(null);
       setImage(null);
       setConfirmResolution(null);
       setDetail((current) => (current?.item.id === id ? current : null));
@@ -141,7 +179,7 @@ export function ReportDetailsView({
               label="Back"
               icon="close"
               variant="ghost"
-              disabled={resolving}
+              disabled={busy}
               onPress={() => {
                 if (router.canGoBack()) router.back();
                 else router.replace('/my-reports');
@@ -152,7 +190,7 @@ export function ReportDetailsView({
             label="Refresh"
             icon="retry"
             variant="ghost"
-            disabled={resolving}
+            disabled={busy}
             onPress={() => setVersion((value) => value + 1)}
           />
         </View>
@@ -192,23 +230,33 @@ export function ReportDetailsView({
               <AppText variant="label" selectable>
                 {detail.item.reference}
               </AppText>
-              <AppText selectable>
-                {detail.kind === 'owner' ? detail.item.description : detail.item.summary}
-              </AppText>
-              <AppText style={{ color: theme.muted }}>
-                {detail.kind === 'owner' ? detail.item.landmark : detail.item.area}
-              </AppText>
+              {detail.kind === 'owner' && detail.item.withdrawal ? (
+                <AppText style={{ color: theme.muted }}>
+                  The description, place and photos were erased when you withdrew this report.
+                </AppText>
+              ) : (
+                <>
+                  <AppText selectable>
+                    {detail.kind === 'owner' ? detail.item.description : detail.item.summary}
+                  </AppText>
+                  <AppText style={{ color: theme.muted }}>
+                    {detail.kind === 'owner' ? detail.item.landmark : detail.item.area}
+                  </AppText>
+                </>
+              )}
               <View
                 style={{ padding: 18, borderRadius: 18, backgroundColor: theme.surface, gap: 8 }}
               >
                 <AppText variant="heading">
-                  {['resolved', 'resolution-pending'].includes(detail.item.workflowStatus)
-                    ? workflowLabel(detail.item, detail.kind === 'owner')
-                    : detail.kind === 'owner'
-                      ? detail.item.testOnly
-                        ? 'Test report kept private'
-                        : REVIEW_LABELS[detail.item.reviewStatus]
-                      : 'Published after automatic checks'}
+                  {detail.kind === 'owner' && detail.item.withdrawal
+                    ? 'Withdrawn by you'
+                    : ['resolved', 'resolution-pending'].includes(detail.item.workflowStatus)
+                      ? workflowLabel(detail.item, detail.kind === 'owner')
+                      : detail.kind === 'owner'
+                        ? detail.item.testOnly
+                          ? 'Test report kept private'
+                          : REVIEW_LABELS[detail.item.reviewStatus]
+                        : 'Published after automatic checks'}
                 </AppText>
                 {detail.item.resolution && (
                   <AppText style={{ color: theme.muted }}>
@@ -216,7 +264,14 @@ export function ReportDetailsView({
                     the reporter's observation.
                   </AppText>
                 )}
+                {detail.kind === 'owner' && detail.item.withdrawal && (
+                  <AppText style={{ color: theme.muted }}>
+                    {new Date(detail.item.withdrawal.withdrawnAt).toLocaleString()}.{' '}
+                    {WITHDRAWAL_LABELS[detail.item.withdrawal.outcome]}
+                  </AppText>
+                )}
                 {detail.kind === 'owner' &&
+                  !detail.item.withdrawal &&
                   detail.item.workflowStatus !== 'resolved' &&
                   detail.item.reviewReason && (
                     <AppText style={{ color: theme.muted }}>
@@ -234,7 +289,7 @@ export function ReportDetailsView({
                     label="View public record"
                     icon="nearby"
                     variant="secondary"
-                    disabled={resolving}
+                    disabled={busy}
                     onPress={() =>
                       onOpenPublic
                         ? onOpenPublic(detail.item.id)
@@ -246,13 +301,52 @@ export function ReportDetailsView({
                   />
                 )}
               </View>
+              {detail.kind === 'owner' && !detail.item.withdrawal && (
+                <View style={{ gap: 10 }}>
+                  <AppText variant="heading">Manage this report</AppText>
+                  <AppText variant="caption" style={{ color: theme.muted }}>
+                    {canCorrectReport(detail.item)
+                      ? 'You can correct the service, description, place or pin, or remove photos, until it is published. Corrections are checked again automatically.'
+                      : detail.item.publicationStatus === 'published'
+                        ? 'Published reports cannot be edited. Withdraw it and send a new report if something is wrong.'
+                        : 'This report cannot be corrected right now. You can still withdraw it.'}
+                  </AppText>
+                  {canCorrectReport(detail.item) && (
+                    <ActionButton
+                      label="Correct details"
+                      icon="edit"
+                      variant="secondary"
+                      disabled={busy}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/report-correction',
+                          params: { id: detail.item.id },
+                        })
+                      }
+                    />
+                  )}
+                  <ActionButton
+                    label={withdrawing ? 'Withdrawing report' : 'Withdraw report'}
+                    icon="withdraw"
+                    variant="destructive"
+                    busy={withdrawing}
+                    disabled={resolving}
+                    onPress={() => withdraw(detail.item)}
+                  />
+                  {manageError && (
+                    <AppText accessibilityRole="alert" selectable style={{ color: theme.error }}>
+                      {manageError}
+                    </AppText>
+                  )}
+                </View>
+              )}
               {detail.kind === 'public' || detail.item.publicationStatus === 'published' ? (
                 <>
                   <CommunityActions
                     key={`actions-${detail.item.id}-${version}`}
                     reportId={detail.item.id}
                     version={version}
-                    disabled={resolving}
+                    disabled={busy}
                     onStart={(kind, fixId) =>
                       setConfirmResolution({ kind, ...(fixId ? { fixId } : {}) })
                     }
@@ -265,7 +359,8 @@ export function ReportDetailsView({
                   />
                 </>
               ) : (
-                detail.item.workflowStatus !== 'resolved' && (
+                detail.item.workflowStatus !== 'resolved' &&
+                !detail.item.withdrawal && (
                   <AppText style={{ color: theme.muted }}>
                     Community visits are available after the issue is published. This report stays
                     private.
@@ -343,7 +438,9 @@ export function ReportDetailsView({
               {!photos.length && (
                 <AppText style={{ color: theme.muted }}>
                   {detail.kind === 'owner'
-                    ? 'No photos were attached to this report.'
+                    ? detail.item.withdrawal
+                      ? 'Photos were deleted when you withdrew this report.'
+                      : 'No photos were attached to this report.'
                     : 'No public photos are available.'}
                 </AppText>
               )}

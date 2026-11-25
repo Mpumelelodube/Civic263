@@ -1,6 +1,6 @@
 # Civic263 task tracker
 
-Updated: 21 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/Android device evidence remains the 13 November checkpoint; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
+Updated: 25 November 2026. See [plan.md](plan.md) for acceptance criteria, dependencies and verification. Build/Android device evidence remains the 13 November checkpoint; Firebase production APNs and Apple internal TestFlight availability were verified on 19 November. Checked items have recorded implementation/verification; unchecked items remain open.
 
 ## Completed checkpoint - ece8053
 
@@ -46,7 +46,13 @@ The last Note9 test/service was active at the 13 November handoff. No successful
 
 ## Public pilot gates
 
-- [ ] **P01:** account deletion/withdrawal/correction and agreed retention behavior.
+- [ ] **P01:** account deletion/withdrawal/correction and agreed retention behavior. Rules agreed 25 November in the [account lifecycle spec](../docs/ACCOUNT_LIFECYCLE_SPEC.md):
+  - Deletion keeps published issues as anonymous records, erases everything private and runs immediately.
+  - Withdrawal unpublishes an issue unless another resident added evidence.
+  - Corrections are allowed only before publication.
+
+  Implemented in source with a new emulator suite (`npm run test:lifecycle`, 7 scenarios including the built callable) and repository verification (69 tests). The publication, community, intake and identity suites still pass. Still open: approval to bind the new `firebaseauth.users.delete` role to the backend service account; deploy Firestore indexes (adds the seventh TTL policy, on `accountDeletions`) and Functions; device acceptance of withdraw/correct/delete on a rebuilt candidate; and confirmation of the rules with the operating authority (P04).
+
 - [ ] **P02:** moderation appeals, abuse handling, held-content ownership and support/escalation.
 - [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures.
 - [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.

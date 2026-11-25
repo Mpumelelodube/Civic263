@@ -12,6 +12,7 @@ import {
 } from '../../packages/domain/src/community.ts';
 import { checkResolutionEvidence } from '../../packages/domain/src/report-resolution.ts';
 import { toPublicIncident } from '../../packages/domain/src/publication.ts';
+import { ERASED_RESIDENT } from '../../packages/domain/src/account-lifecycle.ts';
 import type { IncidentRecord, WorkflowStatus } from '../../packages/domain/src/models.ts';
 import { validatePhotos } from './report-intake.ts';
 import { verifyOnSite } from './community.ts';
@@ -239,11 +240,17 @@ export async function submitFieldCheck(
         evidenceStatus: 'pending',
         photoCount: 0,
       });
+      // Withdrawn or erased owners, and erased proposers, receive no further notifications.
       const recipients = [
-        ...new Set<string>([
-          report.ownerUid,
-          ...(command.action === 'report-fix' ? [] : [report.activeFixProposerUid]),
-        ]),
+        ...new Set<string>(
+          [
+            report.moderationStatus === 'withdrawn' ? undefined : report.ownerUid,
+            ...(command.action === 'report-fix' ? [] : [report.activeFixProposerUid]),
+          ].filter(
+            (recipient): recipient is string =>
+              typeof recipient === 'string' && recipient !== ERASED_RESIDENT,
+          ),
+        ),
       ];
       for (const recipient of recipients)
         transaction.create(

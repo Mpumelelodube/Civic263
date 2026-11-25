@@ -1,0 +1,5 @@
+title: Civic263 resident account deletion
+description: Delete a resident's Firebase Auth user after the server has erased their data. No read, list or update access.
+stage: GA
+includedPermissions:
+  - firebaseauth.users.delete

@@ -42,6 +42,16 @@ export function toResidentReport(snapshot: DocumentSnapshot): ResidentReport {
     incidentReference: item.publicationStatus === 'published' ? item.receipt.reference : null,
     ...(resolution ? { resolution } : {}),
     ...(communityResolution ? { communityResolution } : {}),
+    revision: Number.isInteger(item.revision) ? item.revision : 0,
+    correctionCount: Number.isInteger(item.correctionCount) ? item.correctionCount : 0,
+    ...(item.moderationStatus === 'withdrawn' && item.withdrawal
+      ? {
+          withdrawal: {
+            outcome: item.withdrawal.outcome,
+            withdrawnAt: item.withdrawal.withdrawnAt,
+          },
+        }
+      : {}),
   };
 }
 
@@ -93,7 +103,8 @@ export async function readResidentReport(
   }
   return {
     ...toResidentReport(snapshot),
-    location: item.location ?? null,
+    // A retained withdrawn issue keeps its pin only as the community site anchor.
+    location: item.moderationStatus === 'withdrawn' ? null : (item.location ?? null),
     photos,
     resolutionPhotos,
   };

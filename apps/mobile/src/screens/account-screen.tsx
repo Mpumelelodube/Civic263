@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Alert, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import {
   verifyResidentEmail,
   refreshResidentAccount,
 } from '@/services/identity';
+import { deleteMyAccount } from '@/services/account-lifecycle';
 import { useTheme } from '@/theme';
 import { useLayout } from '@/hooks/use-layout';
 import { centeredContent } from '@/layout';
@@ -32,7 +33,46 @@ export function AccountScreen() {
     [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string | null>(null),
-    [notice, setNotice] = useState<string | null>(null);
+    [notice, setNotice] = useState<string | null>(null),
+    [deleting, setDeleting] = useState(false);
+  async function deleteAccount() {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setDeleting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteMyAccount();
+      Alert.alert(
+        'Account deleted',
+        'Your private data was erased. Civic263 starts fresh on this device with a new anonymous identity.',
+      );
+      router.replace('/');
+    } catch (reason) {
+      setError(
+        `Deletion did not finish. Reminders and background location stay paused on this device. ${
+          reason instanceof Error && reason.message
+            ? reason.message
+            : 'Check your connection and retry.'
+        }`,
+      );
+    } finally {
+      lock.current = false;
+      setBusy(false);
+      setDeleting(false);
+    }
+  }
+  function confirmDelete() {
+    Alert.alert(
+      'Delete your account and data?',
+      'Your private reports, photos, site visits, inbox and drafts are erased now, and any saved email sign-in stops working. This cannot be undone.',
+      [
+        { text: 'Keep my account', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => void deleteAccount() },
+      ],
+    );
+  }
   const load = useCallback(async () => {
     try {
       setAccount(await residentAccount());
@@ -306,6 +346,29 @@ export function AccountScreen() {
         Submitted reports follow your saved account. Unsent drafts and camera evidence remain on
         their original device.
       </AppText>
+      {account && mode !== 'reset' && (
+        <View style={{ gap: 12, paddingTop: 12 }}>
+          <AppText variant="heading">Delete account and data</AppText>
+          <AppText style={{ color: theme.muted }}>
+            Erases the private details and photos of your reports, your site visits, inbox and
+            reminder settings, your sign-in, and everything Civic263 keeps on this device, including
+            unsent drafts.
+          </AppText>
+          <AppText style={{ color: theme.muted }}>
+            Issues that are already published stay on the public register as anonymous records; they
+            never show who reported them. To remove one of those too, withdraw it from My reports
+            first.
+          </AppText>
+          <ActionButton
+            label={deleting ? 'Deleting account' : 'Delete account and data'}
+            icon="erase"
+            variant="destructive"
+            busy={deleting}
+            disabled={busy}
+            onPress={confirmDelete}
+          />
+        </View>
+      )}
     </KeyboardAwareScrollView>
   );
 }

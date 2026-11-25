@@ -101,7 +101,7 @@ Rebuild affected signed candidates after code fixes and record the new build IDs
 
 These remain open epics, not implemented features or ready-to-code single tasks. Break each into small command/UI/verification tasks before implementation.
 
-- P01: account deletion, contribution withdrawal/correction and retention rules that preserve appropriate public history and private rights.
+- P01: account deletion, contribution withdrawal/correction and retention rules that preserve appropriate public history and private rights. Rules agreed and implemented in source on 25 November ([spec](../docs/ACCOUNT_LIFECYCLE_SPEC.md)); deployment, device acceptance and confirmation with the operating authority remain.
 - P02: appeals, abuse handling, held-content review ownership and accountable support/escalation procedures.
 - P03: monitoring/alerts, cost controls, backup/restore exercise and a broader orphan/retention policy. The existing cleanup tool only handles proven superseded committed-visit leases.
 - P04: pilot/service boundaries, verified contacts, emergency guidance, privacy/reuse terms, distribution metadata and rollout decision. No official municipal acknowledgement is implied.
