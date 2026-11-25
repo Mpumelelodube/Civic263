@@ -59,22 +59,24 @@ Deployment prerequisites, in order:
 
 Older app builds cannot send these commands; nothing else changes for them.
 
-## Appeals, complaints and operators (P02, not yet deployed)
+## Appeals, complaints and operators (P02)
 
 Rules and the operator runbook are in [the moderation spec](MODERATION_SPEC.md).
+
+The backend and console were deployed on 25 November 2026, as the user approved:
+
+- The Firestore indexes deployment added the eighth TTL policy, on `complaintDailyUsage.expiresAt`.
+- All nine functions were deployed, including the new `staffCommand`. Its Cloud Run invoker is `allUsers`, like the other callables; the operator check runs inside it. Both review workers still admit only the backend service account.
+- The new Hosting site `civic263-ops` serves the console at https://civic263-ops.web.app. The page is `noindex` and `X-Frame-Options: DENY`, and the site's two domains were added to Auth's authorised domains.
+- The project administrator's account was added as the first operator with `scripts/manage-staff.py`.
+
+`scripts/test-live-backend.py` passed against production. It now also checks that a test report cannot be appealed, that an unpublished item cannot be reported, and that a resident identity is refused by `staffCommand` (401 without sign-in, 403 when signed in). The resident app screens await the next build.
 
 - **Resident commands** use `submitReport`: `request-review` (one appeal per held report) and `report-concern` (issue, photo or visit photos). Three distinct identities hide an item until an operator decides. A hidden photo leaves the public sequence through `incidents.photoOrder`; `publicApi` maps public indexes to stored derivative names, so nothing is renamed.
 - **Blocked identities** are keyed by a hash of the UID in `residentBlocks`. They are refused content-creating actions (intake, corrections, visits, appeals and complaints) but keep read, withdraw and delete.
 - **Operators** use a new `staffCommand` callable from the private ops console. Browsers cannot provide App Check, so every command instead requires a verified password sign-in and an active `staffMembers/{uid}` moderator record. Decisions are written to `moderationAudit`.
 - **Operator publication** shares `buildIncident` with automatic review and records `reviewMethod: 'staff'`, which the public API, web portal and app show as "Published after human review".
 - **Account deletion** now also deletes the resident's complaints, appeals and block record. Withdrawal deletes the appeal and closes complaints about material it removes.
-
-Deployment needs:
-
-- Firestore indexes, for the eighth TTL policy on `complaintDailyUsage.expiresAt`.
-- Functions, including `staffCommand`, which must accept unauthenticated HTTP at Cloud Run like the other callables.
-- A hosting site for the ops console.
-- At least one operator added with `scripts/manage-staff.py`.
 
 `npm run test:moderation` covers these paths against demo emulators. A headless-browser check also drove the console through sign-in refusal, appeal publication and complaint restoration.
 

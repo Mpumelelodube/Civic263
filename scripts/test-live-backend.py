@@ -174,6 +174,15 @@ assert call('submitReport', {'action': 'withdraw-report', 'reportId': empty_rece
 erased = call('getMyReport', {'reportId': empty_receipt['reportId']})
 assert erased['description'] == '' and erased['withdrawal']['outcome'] == 'private'
 print('PASS: withdrawal is owner-only, idempotent and erases the report text', flush=True)
+# P02: appeals, complaints and operator access, without touching any genuine report.
+call('submitReport', {'action': 'request-review', 'reportId': report_id}, token=other['idToken'], expected=404)
+call('submitReport', {'action': 'request-review', 'reportId': report_id}, expected=400)
+call('submitReport', {'action': 'report-concern', 'target': {'type': 'issue', 'reportId': report_id}, 'reason': 'offensive'}, expected=404)
+call('submitReport', {'action': 'report-concern', 'target': {'type': 'issue', 'reportId': report_id}, 'reason': 'boring'}, expected=400)
+call('staffCommand', {'action': 'staff-profile'}, token=None, attested=False, expected=401)
+call('staffCommand', {'action': 'staff-profile'}, attested=False, expected=403)
+call('staffCommand', {'action': 'staff-queue', 'queue': 'appeals'}, expected=403)
+print('PASS: test reports cannot be appealed, unpublished items cannot be reported, and residents are not operators', flush=True)
 def delete_account(token):
     for attempt in range(6):
         if call('submitReport', {'action': 'delete-account', 'confirm': 'DELETE'}, token=token)['status'] == 'complete':

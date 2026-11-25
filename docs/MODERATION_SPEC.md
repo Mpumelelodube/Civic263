@@ -1,6 +1,6 @@
 # Spec and runbook: appeals, complaints and operators (P02)
 
-Status: behaviour agreed on 25 November 2026. These are pilot operating rules, not legal conclusions. Confirm them with the operating authority before public rollout (P04).
+Status: behaviour agreed, and backend and console deployed, on 25 November 2026 (https://civic263-ops.web.app). The resident app screens await the next build. These are pilot operating rules, not legal conclusions. Confirm them with the operating authority before public rollout (P04).
 
 ## Decisions
 

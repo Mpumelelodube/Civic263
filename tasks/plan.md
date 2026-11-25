@@ -102,7 +102,7 @@ Rebuild affected signed candidates after code fixes and record the new build IDs
 These remain open epics, not implemented features or ready-to-code single tasks. Break each into small command/UI/verification tasks before implementation.
 
 - P01: account deletion, contribution withdrawal/correction and retention rules that preserve appropriate public history and private rights. Rules agreed and implemented in source on 25 November ([spec](../docs/ACCOUNT_LIFECYCLE_SPEC.md)); deployment, device acceptance and confirmation with the operating authority remain.
-- P02: appeals, abuse handling, held-content review ownership and accountable support/escalation procedures. Rules agreed and implemented in source on 25 November ([spec and runbook](../docs/MODERATION_SPEC.md)); deployment, the first operator and the P04 support contact remain.
+- P02: appeals, abuse handling, held-content review ownership and accountable support/escalation procedures. Rules agreed, implemented and deployed on 25 November ([spec and runbook](../docs/MODERATION_SPEC.md)), with the console at https://civic263-ops.web.app and a first operator; the app build, operator MFA and the P04 support contact remain.
 - P03: monitoring/alerts, cost controls, backup/restore exercise and a broader orphan/retention policy. The existing cleanup tool only handles proven superseded committed-visit leases.
 - P04: pilot/service boundaries, verified contacts, emergency guidance, privacy/reuse terms, distribution metadata and rollout decision. No official municipal acknowledgement is implied.
 - L01: staff operations access, duplicate linking/merge, assignments, controlled exports and evidenced service handoffs.

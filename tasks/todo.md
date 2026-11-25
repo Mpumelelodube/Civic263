@@ -65,11 +65,18 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - An audited `staffCommand` callable and the `apps/ops` console with four queues and a report review page.
   - `scripts/manage-staff.py` for adding and removing operators.
 
-  Verified with `npm run test:moderation` (8 scenarios, including the built callable), unit tests and repository verification (74 tests), and a headless Edge run of the console against demo emulators. Still open:
-  - Deploy indexes (eighth TTL policy) and Functions (new public-invoker callable).
-  - Create an ops hosting site and add the first operator.
-  - App build and device acceptance.
-  - The P04 support contact and confirmation of the rules with the operating authority.
+  Verified with `npm run test:moderation` (8 scenarios, including the built callable), unit tests and repository verification (74 tests), and a headless Edge run of the console against demo emulators.
+
+  Deployed 25 November:
+  - The eighth TTL policy and all nine functions, including `staffCommand`.
+  - The console at https://civic263-ops.web.app.
+  - The project administrator as the first operator.
+
+  The live synthetic check passed the P02 refusals. Still open:
+  - The first operator sets a password and reviews a real queue item.
+  - App build and device acceptance of appeal and report-a-concern.
+  - Multi-factor sign-in for operators (needs Identity Platform).
+  - The P04 support contact, and confirmation of the rules with the operating authority.
 
 - [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures.
 - [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.
