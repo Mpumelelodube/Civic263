@@ -10,5 +10,6 @@ export * from './report-resolution.ts';
 export * from './community.ts';
 export * from './review-reminders.ts';
 export * from './account-lifecycle.ts';
+export * from './moderation.ts';
 
 export * from './field-test.ts';

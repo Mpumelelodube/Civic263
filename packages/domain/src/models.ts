@@ -58,7 +58,7 @@ export interface PublicIncident {
   locationPrecision: 'exact' | 'approximate' | 'hidden';
   publicationVersion: number;
   photoCount?: number;
-  reviewMethod?: 'automated';
+  reviewMethod?: 'automated' | 'staff';
   resolution?: ReportResolution;
   communityResolution?: CommunityResolution;
 }

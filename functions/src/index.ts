@@ -20,6 +20,12 @@ import {
   deleteResidentAccount,
   withdrawReport,
 } from './account-lifecycle.ts';
+import {
+  assertMayContribute,
+  reportConcern,
+  requestHumanReview,
+  runStaffCommand,
+} from './moderation.ts';
 
 initializeApp();
 setGlobalOptions({
@@ -125,10 +131,25 @@ export const submitReport = onCall(
     if (request.data?.action === 'delete-account')
       return deleteResidentAccount(request.data, request.auth.uid);
     await assertAccountActive(request.auth.uid);
-    if (request.data?.action === 'withdraw-report')
-      return withdrawReport(request.data, request.auth.uid);
-    if (request.data?.action === 'correct-report')
-      return correctReport(request.data, request.auth.uid);
+    const action = request.data?.action;
+    // A blocked identity keeps its rights to read, withdraw and delete, but adds nothing new.
+    if (
+      action === undefined ||
+      [
+        'correct-report',
+        'request-review',
+        'report-concern',
+        'resolve',
+        'report-fix',
+        'confirm-fix',
+        'reject-fix',
+      ].includes(action)
+    )
+      await assertMayContribute(request.auth.uid);
+    if (action === 'withdraw-report') return withdrawReport(request.data, request.auth.uid);
+    if (action === 'correct-report') return correctReport(request.data, request.auth.uid);
+    if (action === 'request-review') return requestHumanReview(request.data, request.auth.uid);
+    if (action === 'report-concern') return reportConcern(request.data, request.auth.uid);
     const fieldTester =
       request.auth.token.civic263Test === true &&
       typeof request.auth.token.civic263FieldTestUntil === 'number' &&
@@ -144,6 +165,17 @@ export const submitReport = onCall(
     if (typeof request.data?.action === 'string' && request.data.action.startsWith('community-'))
       return communityCommand(request.data, request.auth.uid, fieldTester);
     return receiveReport(request.data, request.auth.uid, request.auth.token.civic263Test === true);
+  },
+);
+
+// Operators use the private ops console in a browser, so App Check is not available to them.
+// Every command checks a verified password sign-in and an active staffMembers record instead.
+export const staffCommand = onCall(
+  { region: 'europe-west1', maxInstances: 2, timeoutSeconds: 60, memory: '512MiB' },
+  async (request) => {
+    if (!request.auth)
+      throw new HttpsError('unauthenticated', 'Sign in to the operations console.');
+    return runStaffCommand(request.data, request.auth);
   },
 );
 

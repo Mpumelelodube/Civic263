@@ -138,7 +138,11 @@ export function IncidentDetailPage() {
                   Recorded from the reporter's observation.
                 </li>
               )}
-              <li>Published after automatic checks: {evidenceAge(incident.firstAcceptedAt)}.</li>
+              <li>
+                Published after{' '}
+                {incident.reviewMethod === 'staff' ? 'human review' : 'automatic checks'}:{' '}
+                {evidenceAge(incident.firstAcceptedAt)}.
+              </li>
               <li>
                 Latest approved resident observation: {evidenceAge(incident.lastApprovedEvidenceAt)}
                 .

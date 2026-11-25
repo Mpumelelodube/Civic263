@@ -15,7 +15,8 @@ export function CommunityHistory({
 }: {
   reportId: string;
   version: number;
-  onPhoto: (uri: string) => void;
+  /** `checkId` lets the photo viewer offer to report that visit's photos. */
+  onPhoto: (uri: string, checkId: string) => void;
 }) {
   const theme = useTheme();
   const [items, setItems] = useState<PublicFieldCheck[]>([]);
@@ -110,7 +111,7 @@ export function CommunityHistory({
                   accessibilityRole="button"
                   accessibilityLabel={`Open ${FIELD_CHECK_LABELS[item.kind]} photo ${index + 1}`}
                   style={{ width: '30%' }}
-                  onPress={() => onPhoto(uri)}
+                  onPress={() => onPhoto(uri, item.id)}
                 >
                   <Image
                     source={{ uri }}

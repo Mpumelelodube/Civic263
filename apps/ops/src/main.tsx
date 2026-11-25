@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@civic263/web-ui/styles.css';
+import './ops.css';
 import { App } from './app';
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing application root');

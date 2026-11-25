@@ -58,8 +58,11 @@ export function canCorrectReport(report: {
   workflowStatus: WorkflowStatus;
   reviewStatus: string;
   correctionCount?: number;
+  appeal?: { status: string } | null;
 }) {
   return (
+    // While a person reviews an appeal, the content they are looking at must not change.
+    report.appeal?.status !== 'open' &&
     report.moderationStatus === 'pending' &&
     report.publicationStatus === 'hidden' &&
     report.workflowStatus === 'received' &&

@@ -111,6 +111,19 @@ export async function servePublicApi(request: Request, response: Response) {
           return;
         }
         let photoPath = `public/incidents/${incident.id}/${match[3]}.jpg`;
+        if (!resolution) {
+          // Photos hidden after complaints leave the public sequence; stored files keep their names.
+          const canonical = (await db.collection('incidents').doc(incident.id).get()).data();
+          const order = canonical?.photoOrder;
+          if (Array.isArray(order)) {
+            const stored = order[Number(match[3])];
+            if (!Number.isInteger(stored)) {
+              response.status(404).end();
+              return;
+            }
+            photoPath = `public/incidents/${incident.id}/${stored}.jpg`;
+          }
+        }
         if (resolution) {
           const canonical = (await db.collection('incidents').doc(incident.id).get()).data();
           const batch = canonical?.resolutionMediaBatchId;

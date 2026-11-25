@@ -44,6 +44,21 @@ export function toResidentReport(snapshot: DocumentSnapshot): ResidentReport {
     ...(communityResolution ? { communityResolution } : {}),
     revision: Number.isInteger(item.revision) ? item.revision : 0,
     correctionCount: Number.isInteger(item.correctionCount) ? item.correctionCount : 0,
+    ...(item.appeal
+      ? {
+          appeal: {
+            status: item.appeal.status,
+            requestedAt: item.appeal.requestedAt,
+            dueBy: item.appeal.dueBy,
+            ...(item.appeal.decidedAt ? { decidedAt: item.appeal.decidedAt } : {}),
+            ...(item.appeal.reason ? { reason: item.appeal.reason } : {}),
+            ...(item.appeal.note ? { note: item.appeal.note } : {}),
+          },
+        }
+      : {}),
+    ...(item.moderationHold
+      ? { moderationHold: { status: item.moderationHold.status, since: item.moderationHold.since } }
+      : {}),
     ...(item.moderationStatus === 'withdrawn' && item.withdrawal
       ? {
           withdrawal: {

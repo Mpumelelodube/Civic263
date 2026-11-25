@@ -4,6 +4,7 @@ import type { ReportLocation } from './locations.ts';
 import type { ReportResolution } from './report-resolution.ts';
 import type { CommunityResolution } from './community.ts';
 import type { WithdrawalOutcome } from './account-lifecycle.ts';
+import type { ModerationHold, ResidentAppeal } from './moderation.ts';
 
 export type ReviewStatus = 'queued' | 'processing' | 'retrying' | 'published' | 'held';
 export type ReviewReason =
@@ -28,6 +29,9 @@ export interface ResidentReport {
   revision: number;
   correctionCount: number;
   withdrawal?: { outcome: WithdrawalOutcome; withdrawnAt: string };
+  appeal?: ResidentAppeal;
+  /** A published issue an operator is reviewing after complaints, or has removed. */
+  moderationHold?: ModerationHold;
 }
 export interface ResidentReportDetail extends ResidentReport {
   location: ReportLocation | null;

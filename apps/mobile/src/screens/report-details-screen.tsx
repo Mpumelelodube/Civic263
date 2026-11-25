@@ -4,17 +4,25 @@ import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, View } from 're
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import {
+  APPEAL_NOTE_MAX,
   canCorrectReport,
+  canRequestReview,
   categoryLabel,
   HANDOFF_LABELS,
+  KEEP_PRIVATE_LABELS,
   REVIEW_LABELS,
   REVIEW_REASONS,
   WITHDRAWAL_LABELS,
   workflowLabel,
+  type ComplaintTarget,
   type FieldCheckKind,
   type ResidentReport,
 } from '@civic263/domain';
 import { withdrawMyReport } from '@/services/account-lifecycle';
+import { requestHumanReview } from '@/services/moderation';
+import { BottomSheet } from '@/components/bottom-sheet';
+import { ConcernForm } from '@/components/concern-form';
+import { FormField } from '@/components/form-field';
 import { AppText } from '@/components/app-text';
 import { ActionButton, IconBadge } from '@/components/action-button';
 import {
@@ -67,7 +75,42 @@ export function ReportDetailsView({
   const [resolving, setResolving] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [manageError, setManageError] = useState<string | null>(null);
-  const busy = resolving || withdrawing;
+  // Photo viewer: what a resident may report from it, and whether the report form is showing.
+  const [imageTarget, setImageTarget] = useState<ComplaintTarget | null>(null);
+  const [reportingPhoto, setReportingPhoto] = useState(false);
+  const [reportingIssue, setReportingIssue] = useState<ComplaintTarget | null>(null);
+  const [appealOpen, setAppealOpen] = useState(false);
+  const [appealNote, setAppealNote] = useState('');
+  const [appealing, setAppealing] = useState(false);
+  const busy = resolving || withdrawing || appealing;
+  const openImage = (uri: string, target?: ComplaintTarget) => {
+    setImage(uri);
+    setImageTarget(target ?? null);
+    setReportingPhoto(false);
+  };
+  const closeImage = () => {
+    setImage(null);
+    setImageTarget(null);
+    setReportingPhoto(false);
+  };
+  const sendAppeal = (reportId: string) => {
+    setAppealing(true);
+    setManageError(null);
+    requestHumanReview(reportId, appealNote)
+      .then(() => {
+        setAppealOpen(false);
+        setAppealNote('');
+        setVersion((value) => value + 1);
+      })
+      .catch((reason: unknown) =>
+        setManageError(
+          reason instanceof Error && reason.message
+            ? reason.message
+            : 'Could not send the request. Check your connection and retry.',
+        ),
+      )
+      .finally(() => setAppealing(false));
+  };
   const withdraw = (report: ResidentReport) => {
     const published = report.publicationStatus === 'published';
     Alert.alert(
@@ -106,6 +149,9 @@ export function ReportDetailsView({
       setError(null);
       setManageError(null);
       setImage(null);
+      setImageTarget(null);
+      setReportingPhoto(false);
+      setReportingIssue(null);
       setConfirmResolution(null);
       setDetail((current) => (current?.item.id === id ? current : null));
       if (!id || !/^[a-f0-9]{40}$/.test(id) || (view !== 'owner' && view !== 'public')) {
@@ -256,8 +302,26 @@ export function ReportDetailsView({
                         ? detail.item.testOnly
                           ? 'Test report kept private'
                           : REVIEW_LABELS[detail.item.reviewStatus]
-                        : 'Published after automatic checks'}
+                        : detail.item.reviewMethod === 'staff'
+                          ? 'Published after human review'
+                          : 'Published after automatic checks'}
                 </AppText>
+                {detail.kind === 'owner' && detail.item.moderationHold && (
+                  <AppText style={{ color: theme.muted }}>
+                    {detail.item.moderationHold.status === 'hidden'
+                      ? 'Hidden from the public register while a reviewer checks complaints about it.'
+                      : 'Removed from the public register after a reviewer upheld complaints about it.'}
+                  </AppText>
+                )}
+                {detail.kind === 'owner' && detail.item.appeal && (
+                  <AppText style={{ color: theme.muted }} accessibilityLiveRegion="polite">
+                    {detail.item.appeal.status === 'open'
+                      ? `A person is reviewing this report. Expect a decision by ${new Date(detail.item.appeal.dueBy).toLocaleDateString()}.`
+                      : detail.item.appeal.status === 'published'
+                        ? 'A reviewer published it after your request.'
+                        : `A reviewer kept it private. ${KEEP_PRIVATE_LABELS[detail.item.appeal.reason ?? 'other']}${detail.item.appeal.note ? ` ${detail.item.appeal.note}` : ''}`}
+                  </AppText>
+                )}
                 {detail.item.resolution && (
                   <AppText style={{ color: theme.muted }}>
                     {new Date(detail.item.resolution.resolvedAt).toLocaleString()}. Recorded from
@@ -305,11 +369,13 @@ export function ReportDetailsView({
                 <View style={{ gap: 10 }}>
                   <AppText variant="heading">Manage this report</AppText>
                   <AppText variant="caption" style={{ color: theme.muted }}>
-                    {canCorrectReport(detail.item)
-                      ? 'You can correct the service, description, place or pin, or remove photos, until it is published. Corrections are checked again automatically.'
-                      : detail.item.publicationStatus === 'published'
-                        ? 'Published reports cannot be edited. Withdraw it and send a new report if something is wrong.'
-                        : 'This report cannot be corrected right now. You can still withdraw it.'}
+                    {detail.item.appeal?.status === 'open'
+                      ? 'Corrections are paused while a person reviews this report. You can still withdraw it.'
+                      : canCorrectReport(detail.item)
+                        ? 'You can correct the service, description, place or pin, or remove photos, until it is published. Corrections are checked again automatically.'
+                        : detail.item.publicationStatus === 'published'
+                          ? 'Published reports cannot be edited. Withdraw it and send a new report if something is wrong.'
+                          : 'This report cannot be corrected right now. You can still withdraw it.'}
                   </AppText>
                   {canCorrectReport(detail.item) && (
                     <ActionButton
@@ -323,6 +389,15 @@ export function ReportDetailsView({
                           params: { id: detail.item.id },
                         })
                       }
+                    />
+                  )}
+                  {canRequestReview(detail.item) && (
+                    <ActionButton
+                      label="Ask for a human review"
+                      icon="reviews"
+                      variant="secondary"
+                      disabled={busy}
+                      onPress={() => setAppealOpen(true)}
                     />
                   )}
                   <ActionButton
@@ -340,6 +415,15 @@ export function ReportDetailsView({
                   )}
                 </View>
               )}
+              {detail.kind === 'public' && (
+                <ActionButton
+                  label="Report a concern"
+                  icon="warning"
+                  variant="ghost"
+                  disabled={busy}
+                  onPress={() => setReportingIssue({ type: 'issue', reportId: detail.item.id })}
+                />
+              )}
               {detail.kind === 'public' || detail.item.publicationStatus === 'published' ? (
                 <>
                   <CommunityActions
@@ -355,7 +439,9 @@ export function ReportDetailsView({
                     key={`history-${detail.item.id}-${version}`}
                     reportId={detail.item.id}
                     version={version}
-                    onPhoto={setImage}
+                    onPhoto={(uri, checkId) =>
+                      openImage(uri, { type: 'check', reportId: detail.item.id, checkId })
+                    }
                   />
                 </>
               ) : (
@@ -385,7 +471,14 @@ export function ReportDetailsView({
                     style={{ width: twoPane ? (index === 0 ? '100%' : '31.5%') : '47%' }}
                     accessibilityRole="button"
                     accessibilityLabel={`Open report photo ${index + 1}`}
-                    onPress={() => setImage(uri)}
+                    onPress={() =>
+                      openImage(
+                        uri,
+                        detail.kind === 'public'
+                          ? { type: 'photo', reportId: detail.item.id, index }
+                          : undefined,
+                      )
+                    }
                   >
                     <Image
                       source={{ uri }}
@@ -421,7 +514,7 @@ export function ReportDetailsView({
                         accessibilityRole="button"
                         accessibilityLabel={`Open resolution photo ${index + 1}`}
                         style={{ width: '47%' }}
-                        onPress={() => setImage(uri)}
+                        onPress={() => openImage(uri)}
                       >
                         <Image
                           source={{ uri }}
@@ -473,29 +566,102 @@ export function ReportDetailsView({
       )}
       <Modal
         visible={image !== null}
-        onRequestClose={() => setImage(null)}
+        onRequestClose={closeImage}
         statusBarTranslucent
         navigationBarTranslucent
         animationType={reduced ? 'none' : 'fade'}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-          <ActionButton
-            label="Close photo"
-            icon="close"
-            variant="ghost"
-            onPress={() => setImage(null)}
-          />
-          {image && (
-            <Image
-              source={{ uri: image }}
-              style={{ flex: 1 }}
-              contentFit="contain"
-              cachePolicy="none"
-              accessibilityLabel="Enlarged report photo"
-            />
+          {reportingPhoto && imageTarget ? (
+            // The report form replaces the photo inside the same modal; no second modal opens.
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ ...centeredContent(layout), padding: 20, paddingBottom: 40 }}
+            >
+              <ConcernForm target={imageTarget} onClose={closeImage} />
+            </ScrollView>
+          ) : (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <ActionButton
+                  label="Close photo"
+                  icon="close"
+                  variant="ghost"
+                  onPress={closeImage}
+                />
+                {imageTarget && (
+                  <ActionButton
+                    label="Report this photo"
+                    icon="warning"
+                    variant="ghost"
+                    onPress={() => setReportingPhoto(true)}
+                  />
+                )}
+              </View>
+              {image && (
+                <Image
+                  source={{ uri: image }}
+                  style={{ flex: 1 }}
+                  contentFit="contain"
+                  cachePolicy="none"
+                  accessibilityLabel="Enlarged report photo"
+                />
+              )}
+            </>
           )}
         </SafeAreaView>
       </Modal>
+      <BottomSheet isPresented={reportingIssue !== null} onDismiss={() => setReportingIssue(null)}>
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
+          <View style={{ padding: 20, paddingBottom: 40 }}>
+            {reportingIssue && (
+              <ConcernForm target={reportingIssue} onClose={() => setReportingIssue(null)} />
+            )}
+          </View>
+        </ScrollView>
+      </BottomSheet>
+      <BottomSheet isPresented={appealOpen} onDismiss={() => !appealing && setAppealOpen(false)}>
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
+          <View style={{ padding: 20, paddingBottom: 40, gap: 16 }}>
+            <AppText variant="title" accessibilityRole="header">
+              Ask for a human review
+            </AppText>
+            <AppText style={{ color: theme.muted }}>
+              Automatic checks kept this report private. A Civic263 reviewer will read it, including
+              your photos, and either publish it or explain why it stays private. You can ask once
+              per report, and corrections pause until they decide.
+            </AppText>
+            <FormField
+              label="Why should it be public? (optional)"
+              icon="edit"
+              hint={`Up to ${APPEAL_NOTE_MAX} characters. Leave out names and contact details.`}
+              maxLength={APPEAL_NOTE_MAX}
+              multiline
+              value={appealNote}
+              onChangeText={setAppealNote}
+              editable={!appealing}
+            />
+            {manageError && appealOpen && (
+              <AppText accessibilityRole="alert" selectable style={{ color: theme.error }}>
+                {manageError}
+              </AppText>
+            )}
+            <ActionButton
+              label={appealing ? 'Sending request' : 'Send for review'}
+              icon="send"
+              busy={appealing}
+              onPress={() => detail && sendAppeal(detail.item.id)}
+            />
+            <ActionButton
+              label="Cancel"
+              icon="close"
+              variant="ghost"
+              disabled={appealing}
+              onPress={() => setAppealOpen(false)}
+            />
+          </View>
+        </ScrollView>
+      </BottomSheet>
     </View>
   );
 }

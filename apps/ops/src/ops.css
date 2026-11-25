@@ -1,0 +1,182 @@
+/* Operations console additions. Extends the shared ledger styles; same tokens and scale. */
+.sign-in {
+  max-width: 420px;
+  margin: 12vh auto;
+  padding: 0 16px;
+  display: grid;
+  gap: 12px;
+}
+.form-grid {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+}
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.form-grid fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.form-grid legend {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 4px;
+}
+.form-grid label.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #101214;
+  font-size: 14px;
+}
+.form-grid label.check input {
+  height: auto;
+}
+textarea {
+  font: inherit;
+  border: 1px solid #b9bdc3;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #101214;
+  resize: vertical;
+}
+textarea:focus-visible {
+  outline: 2px solid var(--data);
+  outline-offset: 3px;
+}
+.form-message {
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: white;
+  border-left: 3px solid var(--data);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+button.danger {
+  border-color: #a32c36;
+  color: #a32c36;
+}
+button.danger:hover {
+  background: #fbeaec;
+}
+.queue-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.queue-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.queue-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+.queue-table .numeric {
+  font-variant-numeric: tabular-nums;
+}
+.queue-table td:first-child a {
+  white-space: nowrap;
+}
+.scope {
+  overflow-wrap: anywhere;
+}
+.cell-detail {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.note-cell {
+  max-width: 360px;
+  white-space: pre-wrap;
+}
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eff1f3;
+  white-space: nowrap;
+}
+.badge.overdue,
+.badge.high {
+  background: #fbeaec;
+  color: #a32c36;
+}
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.content-panel {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 8px 0;
+}
+.review-photo {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.review-photo img,
+.photo-missing {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f4f5f5;
+}
+.photo-missing {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.review-photo figcaption {
+  font-size: 12px;
+  color: var(--muted);
+}
+.flag-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+    margin: 16px;
+  }
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+}

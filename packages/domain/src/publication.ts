@@ -24,7 +24,9 @@ export function toPublicIncident(record: IncidentRecord): PublicIncident | null 
     locationPrecision: record.locationPrecision,
     publicationVersion: record.publicationVersion,
     ...(record.photoCount !== undefined ? { photoCount: record.photoCount } : {}),
-    ...(record.reviewMethod === 'automated' ? { reviewMethod: 'automated' as const } : {}),
+    ...(record.reviewMethod === 'automated' || record.reviewMethod === 'staff'
+      ? { reviewMethod: record.reviewMethod }
+      : {}),
     ...(resolution ? { resolution } : {}),
     ...(communityResolution ? { communityResolution } : {}),
   };

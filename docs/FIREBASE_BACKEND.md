@@ -59,6 +59,25 @@ Deployment prerequisites, in order:
 
 Older app builds cannot send these commands; nothing else changes for them.
 
+## Appeals, complaints and operators (P02, not yet deployed)
+
+Rules and the operator runbook are in [the moderation spec](MODERATION_SPEC.md).
+
+- **Resident commands** use `submitReport`: `request-review` (one appeal per held report) and `report-concern` (issue, photo or visit photos). Three distinct identities hide an item until an operator decides. A hidden photo leaves the public sequence through `incidents.photoOrder`; `publicApi` maps public indexes to stored derivative names, so nothing is renamed.
+- **Blocked identities** are keyed by a hash of the UID in `residentBlocks`. They are refused content-creating actions (intake, corrections, visits, appeals and complaints) but keep read, withdraw and delete.
+- **Operators** use a new `staffCommand` callable from the private ops console. Browsers cannot provide App Check, so every command instead requires a verified password sign-in and an active `staffMembers/{uid}` moderator record. Decisions are written to `moderationAudit`.
+- **Operator publication** shares `buildIncident` with automatic review and records `reviewMethod: 'staff'`, which the public API, web portal and app show as "Published after human review".
+- **Account deletion** now also deletes the resident's complaints, appeals and block record. Withdrawal deletes the appeal and closes complaints about material it removes.
+
+Deployment needs:
+
+- Firestore indexes, for the eighth TTL policy on `complaintDailyUsage.expiresAt`.
+- Functions, including `staffCommand`, which must accept unauthenticated HTTP at Cloud Run like the other callables.
+- A hosting site for the ops console.
+- At least one operator added with `scripts/manage-staff.py`.
+
+`npm run test:moderation` covers these paths against demo emulators. A headless-browser check also drove the console through sign-in refusal, appeal publication and complaint restoration.
+
 ## Backend dependency maintenance - 12 November 2026
 
 The pre-deployment production audit found high-severity advisories in the existing image and request parsers. Sharp is now pinned to 0.35.5 and the deployed Functions package pins body-parser 2.4.0 through its override. These versions address the [Sharp native decoder advisories](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) and [body-parser compressed-request denial of service](https://github.com/advisories/GHSA-27r3-jxmh-p828). JPEG validation, metadata removal and the publication/resolution integration checks passed with the updated image library.

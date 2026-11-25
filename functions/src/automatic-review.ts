@@ -10,6 +10,7 @@ import type { ReviewReason } from '../../packages/domain/src/resident-reports.ts
 import type { CategoryId } from '../../packages/domain/src/categories.ts';
 import type { ReportLocation } from '../../packages/domain/src/locations.ts';
 import type { SubmissionReceipt } from '../../packages/domain/src/report-submission.ts';
+import { containsContactDetails } from '../../packages/domain/src/moderation.ts';
 
 export const REVIEW_MODEL = 'gemini-3.1-flash-lite';
 export const REVIEW_POLICY = 'civic263-publication-v1';
@@ -35,8 +36,7 @@ type VisionResponse = { responses?: Record<string, unknown>[] };
 type ModelResponse = {
   candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
 };
-const containsContact = (text: string) =>
-  /(?:https?:|www\.|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:\+?\d[\s()-]*){7,}|@[a-z0-9_]+)/i.test(text);
+const containsContact = containsContactDetails;
 
 export function parseReview(data: unknown, photoCount: number): Decision {
   if (!data || typeof data !== 'object') throw new Error('Invalid review output');
@@ -82,6 +82,46 @@ export function parseReview(data: unknown, photoCount: number): Decision {
     summary: String(item.summary).trim(),
     area: String(item.area).trim(),
     safePhotos: item.safePhotos as number[],
+  };
+}
+
+/** The canonical incident for a newly published report, from automated or operator review. */
+export function buildIncident(
+  reportId: string,
+  item: { categoryId: CategoryId; location?: ReportLocation; receipt: SubmissionReceipt },
+  text: { title: string; summary: string; area: string },
+  photoCount: number,
+  reviewMethod: 'automated' | 'staff',
+  now: string,
+): IncidentRecord {
+  const location = item.location;
+  return {
+    id: reportId,
+    reference: item.receipt.reference,
+    municipalityId: 'unassigned',
+    title: text.title,
+    summary: text.summary,
+    categoryId: item.categoryId,
+    area: text.area,
+    workflowStatus: 'received',
+    handoffStatus: 'not-sent',
+    firstAcceptedAt: now,
+    lastApprovedEvidenceAt: item.receipt.receivedAt,
+    evidenceSource: 'resident-observation',
+    // Public coordinates are rounded; the precise private pin stays on the report.
+    location: location
+      ? {
+          latitude: Math.round(location.latitude * 1000) / 1000,
+          longitude: Math.round(location.longitude * 1000) / 1000,
+        }
+      : null,
+    locationPrecision: location ? 'approximate' : 'hidden',
+    publicationVersion: 1,
+    publicationStatus: 'published',
+    internalNotes: '',
+    rawMediaPaths: [],
+    photoCount,
+    reviewMethod,
   };
 }
 
@@ -275,34 +315,14 @@ export async function reviewSubmittedReport(reportId: string, assess = checkRepo
       if (current?.reviewLease !== lease || current.moderationStatus !== 'pending')
         throw new Error('Review lease changed');
       if (decision.publish) {
-        const location = item.location as { latitude: number; longitude: number } | undefined;
-        const incident: IncidentRecord = {
-          id: reportId,
-          reference: (item.receipt as { reference: string }).reference,
-          municipalityId: 'unassigned',
-          title: decision.title,
-          summary: decision.summary,
-          categoryId: item.categoryId as IncidentRecord['categoryId'],
-          area: decision.area,
-          workflowStatus: 'received',
-          handoffStatus: 'not-sent',
-          firstAcceptedAt: now,
-          lastApprovedEvidenceAt: item.receipt.receivedAt,
-          evidenceSource: 'resident-observation',
-          location: location
-            ? {
-                latitude: Math.round(location.latitude * 1000) / 1000,
-                longitude: Math.round(location.longitude * 1000) / 1000,
-              }
-            : null,
-          locationPrecision: location ? 'approximate' : 'hidden',
-          publicationVersion: 1,
-          publicationStatus: 'published',
-          internalNotes: '',
-          rawMediaPaths: [],
-          photoCount: decision.safePhotos.length,
-          reviewMethod: 'automated',
-        };
+        const incident = buildIncident(
+          reportId,
+          item,
+          decision,
+          decision.safePhotos.length,
+          'automated',
+          now,
+        );
         transaction.create(db.collection('incidents').doc(reportId), incident);
         transaction.create(
           db.collection('publicIncidents').doc(reportId),

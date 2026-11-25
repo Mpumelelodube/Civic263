@@ -16,7 +16,7 @@ export async function startIntakeTestServer() {
   });
   const sdkRequire = createRequire(import.meta.resolve('firebase-functions/v2/https'));
   const express = sdkRequire('express');
-  const { submitReport, lookupPlace, getMyReports, getMyReport, publicApi } =
+  const { submitReport, lookupPlace, getMyReports, getMyReport, publicApi, staffCommand } =
     await import('../functions/lib/index.js');
   const app = express();
   app.use(express.json({ limit: '5mb' }));
@@ -24,6 +24,8 @@ export async function startIntakeTestServer() {
   app.post('/demo-civic263/europe-west1/lookupPlace', lookupPlace);
   app.post('/demo-civic263/europe-west1/getMyReports', getMyReports);
   app.post('/demo-civic263/europe-west1/getMyReport', getMyReport);
+  // The ops console calls from a browser, so its CORS preflight must reach the handler too.
+  app.all('/demo-civic263/europe-west1/staffCommand', staffCommand);
   app.use('/demo-civic263/europe-west1/publicApi', publicApi);
   return new Promise((resolve, reject) => {
     const server = app.listen(5001, '127.0.0.1', () => resolve(server));

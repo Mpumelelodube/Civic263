@@ -53,7 +53,24 @@ The last Note9 test/service was active at the 13 November handoff. No successful
 
   Implemented in source with a new emulator suite (`npm run test:lifecycle`, 7 scenarios including the built callable) and repository verification (69 tests). The publication, community, intake and identity suites still pass. Backend deployed 25 November: the approved `civic263AccountDeletion` role (`firebaseauth.users.delete` only) is bound to `civic263-backend`, the seventh TTL policy is ACTIVE and all eight functions are updated. The live synthetic-identity check passed correction, withdrawal and deletion, including refusal of deleted identities' unexpired tokens. Still open: an app build and device acceptance of withdraw/correct/delete (builds deferred), and confirmation of the rules with the operating authority (P04).
 
-- [ ] **P02:** moderation appeals, abuse handling, held-content ownership and support/escalation.
+- [ ] **P02:** moderation appeals, abuse handling, held-content ownership and support/escalation. Rules agreed 25 November in the [moderation spec and runbook](../docs/MODERATION_SPEC.md):
+  - Named operators review in a private web console.
+  - Three distinct reporters hide content until an operator decides.
+  - Any held report can be appealed once.
+  - The target is a first decision within two working days.
+
+  Implemented in source:
+  - Resident appeal and report-a-concern flows in the app.
+  - Server rules for appeals, complaints, auto-hide, restore/remove and contributor blocks.
+  - An audited `staffCommand` callable and the `apps/ops` console with four queues and a report review page.
+  - `scripts/manage-staff.py` for adding and removing operators.
+
+  Verified with `npm run test:moderation` (8 scenarios, including the built callable), unit tests and repository verification (74 tests), and a headless Edge run of the console against demo emulators. Still open:
+  - Deploy indexes (eighth TTL policy) and Functions (new public-invoker callable).
+  - Create an ops hosting site and add the first operator.
+  - App build and device acceptance.
+  - The P04 support contact and confirmation of the rules with the operating authority.
+
 - [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures.
 - [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.
 

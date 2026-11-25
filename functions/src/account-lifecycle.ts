@@ -93,9 +93,10 @@ export async function withdrawReport(value: unknown, uid: string): Promise<Withd
         receipt: { reportId, ...report.withdrawal } as WithdrawalReceipt,
         cleanup: storedPaths(report.mediaCleanup),
       };
-    const [checks, canonical] = await Promise.all([
+    const [checks, canonical, flags] = await Promise.all([
       transaction.get(db.collection('fieldChecks').where('reportId', '==', reportId)),
       transaction.get(incidentRef),
+      transaction.get(db.collection('contentFlags').where('reportId', '==', reportId)),
     ]);
     const outcome = withdrawalOutcome({
       published: report.publicationStatus === 'published',
@@ -112,9 +113,10 @@ export async function withdrawReport(value: unknown, uid: string): Promise<Withd
       ...storedPaths(report.resolutionEvidence?.rawMediaPaths),
       ...(incident
         ? [
-            ...indexes(incident.photoCount).map(
-              (index) => `public/incidents/${reportId}/${index}.jpg`,
-            ),
+            // Stored derivatives keep their numbering when complaints hide some of them.
+            ...indexes(
+              (incident as { storedPhotoCount?: number }).storedPhotoCount ?? incident.photoCount,
+            ).map((index) => `public/incidents/${reportId}/${index}.jpg`),
             ...batchPaths(
               `public/incidents/${reportId}/resolution`,
               (incident as { resolutionMediaBatchId?: unknown }).resolutionMediaBatchId,
@@ -171,6 +173,7 @@ export async function withdrawReport(value: unknown, uid: string): Promise<Withd
       const changes = {
         summary: WITHDRAWN_SUMMARY,
         photoCount: 0,
+        photoOrder: [] as number[],
         ...(incidentResolution
           ? {
               resolution: {
@@ -188,7 +191,10 @@ export async function withdrawReport(value: unknown, uid: string): Promise<Withd
         withdrawnAt,
         withdrawalOutcome: outcome,
       });
-      const projection = toPublicIncident({ ...incident, ...changes });
+      // An issue an operator has hidden after complaints stays hidden.
+      const projection = (incident as { moderationHold?: unknown }).moderationHold
+        ? null
+        : toPublicIncident({ ...incident, ...changes });
       if (projection) transaction.set(publicRef, projection);
       for (const check of own) {
         transaction.update(check.ref, {
@@ -207,6 +213,15 @@ export async function withdrawReport(value: unknown, uid: string): Promise<Withd
         );
       }
     }
+    // The appeal holds the resident's own note; complaints about removed material are moot.
+    transaction.delete(db.collection('appeals').doc(reportId));
+    for (const flag of flags.docs)
+      if (flag.data().open && (outcome !== 'retained' || flag.data().target?.type !== 'issue'))
+        transaction.update(flag.ref, {
+          open: false,
+          closedBy: 'withdrawal',
+          decidedAt: withdrawnAt,
+        });
     transaction.create(db.collection('reportEvents').doc(`${reportId}_withdrawn`), {
       event: 'resident-withdrew',
       reportId,
@@ -260,6 +275,7 @@ export async function correctReport(value: unknown, uid: string): Promise<Correc
         // A processing lease that expired belongs to a worker that stopped; it will retry.
         reviewStatus: reviewing ? 'retrying' : (report.reviewStatus ?? 'queued'),
         correctionCount: report.correctionCount ?? 0,
+        appeal: report.appeal ?? null,
       })
     )
       throw new HttpsError(
@@ -343,6 +359,8 @@ async function eraseReports(db: Firestore, uid: string, expired: Expired) {
       await db.runTransaction(async (transaction) => {
         const report = (await transaction.get(doc.ref)).data();
         if (!report || report.ownerUid !== uid) return;
+        // Appeals carry the resident's own note; the moderation audit keeps the decision.
+        transaction.delete(db.collection('appeals').doc(doc.id));
         if (report.publicationStatus !== 'published') {
           transaction.delete(doc.ref);
           return;
@@ -448,6 +466,7 @@ async function eraseResidentRecords(db: Firestore, uid: string) {
     db.recursiveDelete(db.collection('residentCommunity').doc(uid)),
     db.recursiveDelete(db.collection('communityFieldTests').doc(uid)),
     db.collection('placeLookupQuotas').doc(uid).delete(),
+    db.collection('residentBlocks').doc(digest(uid)).delete(),
   ]);
   const limits = await db
     .collection('reportRateLimits')
@@ -465,6 +484,10 @@ async function eraseResidentRecords(db: Firestore, uid: string) {
         .delete(),
       db
         .collection('fieldCheckDailyUsage')
+        .doc(digest(`${uid}|${day}`))
+        .delete(),
+      db
+        .collection('complaintDailyUsage')
         .doc(digest(`${uid}|${day}`))
         .delete(),
     ]);
@@ -518,6 +541,12 @@ export async function deleteResidentAccount(
         expired,
       ),
     () => deleteMatches(db.collection('reportSubmissions').where('ownerUid', '==', uid), expired),
+    // Complaints the resident made; aggregate counts on the reported content remain.
+    () =>
+      deleteMatches(
+        db.collection('contentReports').where('reporterHash', '==', digest(uid)),
+        expired,
+      ),
     () =>
       deleteMatches(db.collection('fieldCheckSubmissions').where('actorUid', '==', uid), expired),
     () => eraseDevices(db, uid).then(() => !expired()),
