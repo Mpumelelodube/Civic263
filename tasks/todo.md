@@ -51,7 +51,7 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - Withdrawal unpublishes an issue unless another resident added evidence.
   - Corrections are allowed only before publication.
 
-  Implemented in source with a new emulator suite (`npm run test:lifecycle`, 7 scenarios including the built callable) and repository verification (69 tests). The publication, community, intake and identity suites still pass. Still open: approval to bind the new `firebaseauth.users.delete` role to the backend service account; deploy Firestore indexes (adds the seventh TTL policy, on `accountDeletions`) and Functions; device acceptance of withdraw/correct/delete on a rebuilt candidate; and confirmation of the rules with the operating authority (P04).
+  Implemented in source with a new emulator suite (`npm run test:lifecycle`, 7 scenarios including the built callable) and repository verification (69 tests). The publication, community, intake and identity suites still pass. Backend deployed 25 November: the approved `civic263AccountDeletion` role (`firebaseauth.users.delete` only) is bound to `civic263-backend`, the seventh TTL policy is ACTIVE and all eight functions are updated. The live synthetic-identity check passed correction, withdrawal and deletion, including refusal of deleted identities' unexpired tokens. Still open: an app build and device acceptance of withdraw/correct/delete (builds deferred), and confirmation of the rules with the operating authority (P04).
 
 - [ ] **P02:** moderation appeals, abuse handling, held-content ownership and support/escalation.
 - [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures.

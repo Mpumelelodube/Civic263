@@ -150,9 +150,47 @@ unchanged = call('getMyReport', {'reportId': report_id})
 assert unchanged['workflowStatus'] == 'received' and len(unchanged['photos']) == 3
 request(base + '/publicApi/incidents/' + report_id, expected=404)
 print('PASS: community preferences/inbox and private-report isolation; no private report can enter public community review', flush=True)
+# P01: correction, withdrawal and account deletion, only on the synthetic identities created above.
+correction = {'action': 'correct-report', 'reportId': report_id, 'revision': 0, 'categoryId': 'other',
+              'description': 'BACKEND VALIDATION ONLY. Corrected synthetic text, no real service issue.',
+              'landmark': 'Private backend test, corrected place', 'keepPhotos': [0],
+              'location': {'latitude': -17.8001, 'longitude': 31.0001, 'source': 'map'}}
+call('submitReport', correction, token=other['idToken'], expected=404)
+assert call('submitReport', correction) == {'reportId': report_id, 'revision': 1}
+assert call('submitReport', correction) == {'reportId': report_id, 'revision': 1}
+call('submitReport', {**correction, 'landmark': 'Stale revision must be refused'}, expected=400)
+for attempt in range(12):
+    corrected = call('getMyReport', {'reportId': report_id})
+    if corrected['reviewStatus'] == 'held':
+        break
+    time.sleep(5)
+assert corrected['revision'] == 1 and corrected['description'] == correction['description']
+assert len(corrected['photos']) == 1 and corrected['reviewStatus'] == 'held'
+print('PASS: correction replaces the held text and pin, removes photos and re-runs the test-isolated review', flush=True)
+call('submitReport', {'action': 'withdraw-report', 'reportId': empty_receipt['reportId']}, token=other['idToken'], expected=404)
+withdrawn = call('submitReport', {'action': 'withdraw-report', 'reportId': empty_receipt['reportId']})
+assert withdrawn['outcome'] == 'private'
+assert call('submitReport', {'action': 'withdraw-report', 'reportId': empty_receipt['reportId']}) == withdrawn
+erased = call('getMyReport', {'reportId': empty_receipt['reportId']})
+assert erased['description'] == '' and erased['withdrawal']['outcome'] == 'private'
+print('PASS: withdrawal is owner-only, idempotent and erases the report text', flush=True)
+def delete_account(token):
+    for attempt in range(6):
+        if call('submitReport', {'action': 'delete-account', 'confirm': 'DELETE'}, token=token)['status'] == 'complete':
+            return
+    raise AssertionError('Account deletion did not complete.')
+for identity, token in ((other, other['idToken']), (owner, owner_token)):
+    delete_account(token)
+    # The ID token is still unexpired: only the server-side deletion marker refuses it now.
+    call('submitReport', {'action': 'community-profile'}, token=token, expected=403)
+    request('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + key, {'idToken': token}, expected=400)
+assert call('getMyReports', {})['reports'] == []
+request(base + '/publicApi/incidents/' + report_id, expected=404)
+print('PASS: account deletion erased both synthetic identities and their reports and refuses their unexpired tokens', flush=True)
 Path('.local').mkdir(exist_ok=True)
 Path('.local/live-backend-test-result.json').write_text(json.dumps({
     'reportId': report_id, 'reference': receipt['reference'], 'testOnly': True,
-    'photoCount': 3, 'reviewStatus': report['reviewStatus'], 'historyVerified': not args.allow_blocked_history, 'passedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+    'photoCount': 3, 'reviewStatus': report['reviewStatus'], 'historyVerified': not args.allow_blocked_history,
+    'lifecycleVerified': True, 'testIdentitiesDeleted': True, 'passedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
 }, indent=2), encoding='utf-8')
 print(('Available live checks passed; owner history remains pending approval.' if args.allow_blocked_history else 'All live backend checks passed.') + ' Only a non-secret test receipt was saved; no authentication tokens were written.', flush=True)

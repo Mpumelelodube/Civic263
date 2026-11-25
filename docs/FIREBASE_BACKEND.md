@@ -30,7 +30,17 @@ Resolution acceptance on 12 November 2026 covered owner/non-owner access, stable
 
 Mobile nearby and public-detail reads request cache revalidation so a recently resolved report is not restored from the device's HTTP cache after its local nearby cache is invalidated.
 
-## Withdrawal, correction and account deletion (P01, not yet deployed)
+## Withdrawal, correction and account deletion (P01)
+
+Deployed 25 November 2026. The user approved the `projects/civic263-df6ec/roles/civic263AccountDeletion` role, which contains only `firebaseauth.users.delete`, and it was bound to `civic263-backend`. The Firestore indexes deployment activated the seventh TTL policy, on `accountDeletions.expiresAt`, and all eight functions were updated. Both review workers still admit only the backend service account.
+
+`scripts/test-live-backend.py` then passed every check against production using only server-claimed synthetic test identities:
+
+- A correction replaced the held text and pin, removed photos and re-ran the test-isolated review.
+- Withdrawal was owner-only and idempotent.
+- Deleting both synthetic identities removed their reports and Auth users, and the server refused their still-unexpired ID tokens with 403.
+
+The updated app has not been built yet.
 
 Three more strict actions use the existing `submitReport` callable, so no new HTTP invoker grant is needed. The rules are in [the account lifecycle spec](ACCOUNT_LIFECYCLE_SPEC.md).
 

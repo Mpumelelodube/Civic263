@@ -1,6 +1,6 @@
 # Spec: withdrawal, correction and account deletion (P01)
 
-Status: behaviour agreed on 25 November 2026. These are product rules for the pilot, not legal conclusions. Confirm them with the operating authority before public rollout (P04).
+Status: behaviour agreed and backend deployed on 25 November 2026; the app changes await the next build. These are product rules for the pilot, not legal conclusions. Confirm them with the operating authority before public rollout (P04).
 
 ## Decisions
 
@@ -36,7 +36,7 @@ Resident confirms in Account. The device first pauses background alerts, geofenc
 3. Deletes every private original its records name (report, resolution and fix-check photos) before erasing those records. The backend role can delete objects but not list them, so deletion uses exact object names. Uploads left over from abandoned attempts, which no record names, stay private until the operator orphan cleanup (P03) removes them.
 4. De-identifies the resident's fix checks and events (the actor becomes `erased-resident`, location fixes removed). Pending evidence becomes private because its originals are gone. A fix they proposed can still be confirmed or rejected by others.
 5. Deletes the community profile, inbox, device and push registrations, submission reservations, field-test record and quota counters.
-6. Deletes the Firebase Auth user last. This needs the `firebaseauth.users.delete` permission (`firebase/iam/backend-account-deletion-role.yaml`), which the backend service account does not have yet; binding it requires explicit approval at deployment.
+6. Deletes the Firebase Auth user last. This uses the `firebaseauth.users.delete` permission (`firebase/iam/backend-account-deletion-role.yaml`), approved and bound to the backend service account on 25 November.
 
 Each step can be repeated, so an interrupted deletion resumes. Afterwards the device deletes its drafts, saved evidence, alert state and cached reports, signs out and starts with a new anonymous identity.
 
