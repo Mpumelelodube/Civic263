@@ -37,6 +37,14 @@ type StaffReport = {
   ownerErased: boolean;
   originals: (string | null)[];
   appeal: { status: string; requestedAt: string; dueBy: string; note?: string } | null;
+  staffDecision: {
+    status: string;
+    decidedAt: string;
+    reason: KeepPrivateReason;
+    note?: string;
+  } | null;
+  /** Set while the report waits for a person because automatic review was off. */
+  dueBy: string | null;
   published: {
     title: string;
     summary: string;
@@ -112,6 +120,7 @@ export function ReportReview() {
     report.publicationStatus === 'hidden' &&
     report.moderationStatus === 'pending';
   const openAppeal = report.appeal?.status === 'open';
+  const waiting = held && report.dueBy !== null;
   const openFlags = report.flags.filter((flag) => flag.open);
   const publish = (event: FormEvent) => {
     event.preventDefault();
@@ -191,10 +200,24 @@ export function ReportReview() {
               </a>
             </p>
           )}
-          <p className="small muted">
-            Automatic review: {report.reviewStatus}
-            {report.reviewReason ? ` — ${REVIEW_REASONS[report.reviewReason]}` : ''}
-          </p>
+          {report.reviewReason === 'staff-review' ? (
+            <p className="small muted">
+              No automatic check ran: automatic review was off when this arrived.{' '}
+              {report.dueBy && <Due at={report.dueBy} />}
+            </p>
+          ) : (
+            <p className="small muted">
+              Automatic review: {report.reviewStatus}
+              {report.reviewReason ? ` — ${REVIEW_REASONS[report.reviewReason]}` : ''}
+            </p>
+          )}
+          {report.staffDecision && (
+            <p className="small">
+              Kept private by a reviewer on {formatDate(report.staffDecision.decidedAt)}:{' '}
+              {KEEP_PRIVATE_LABELS[report.staffDecision.reason]}
+              {report.staffDecision.note ? ` “${report.staffDecision.note}”` : ''}
+            </p>
+          )}
           <div className="photo-grid">
             {report.originals.map((base64, index) => (
               <Photo key={index} base64={base64} label={`Original ${index + 1}`} />
@@ -276,7 +299,7 @@ export function ReportReview() {
                   </button>
                 </div>
               </form>
-              {openAppeal && (
+              {(openAppeal || waiting) && (
                 <form
                   className="form-grid"
                   onSubmit={(event) => {

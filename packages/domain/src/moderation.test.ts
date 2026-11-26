@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   addWorkingDays,
+  awaitingStaffReview,
   canRequestReview,
   complaintPriority,
   flagKey,
@@ -11,9 +12,42 @@ import {
   parseStaffCommand,
   shouldAutoHide,
 } from './moderation.ts';
+import { reviewExplanation, reviewLabel } from './resident-reports.ts';
 
 const id = 'a'.repeat(40);
 const check = 'b'.repeat(40);
+
+test('reports held while automatic review is off wait for a person and say so', () => {
+  const waiting = {
+    moderationStatus: 'pending' as const,
+    publicationStatus: 'hidden',
+    reviewStatus: 'held' as const,
+    reviewReason: 'staff-review' as const,
+  };
+  assert.equal(awaitingStaffReview(waiting), true);
+  assert.equal(reviewLabel(waiting), 'Waiting for a person to review');
+  assert.match(reviewExplanation(waiting) ?? '', /A person will check this report/);
+  const decided = {
+    ...waiting,
+    staffDecision: {
+      status: 'kept-private' as const,
+      decidedAt: '2026-11-26T10:00:00.000Z',
+      reason: 'duplicate' as const,
+      note: 'See the earlier report.',
+    },
+  };
+  assert.equal(awaitingStaffReview(decided), false);
+  assert.equal(reviewLabel(decided), 'Kept private after human review');
+  assert.equal(
+    reviewExplanation(decided),
+    'A reviewer kept it private. The same issue is already on the public register. See the earlier report.',
+  );
+  // Automatic holds keep their existing wording.
+  const automatic = { ...waiting, reviewReason: 'privacy' as const };
+  assert.equal(awaitingStaffReview(automatic), false);
+  assert.equal(reviewLabel(automatic), 'Kept private after automatic review');
+  assert.equal(awaitingStaffReview({ ...waiting, publicationStatus: 'published' }), false);
+});
 
 test('response deadlines count working days only', () => {
   // Friday 27 November 2026 -> Tuesday 1 December 2026.
@@ -46,6 +80,8 @@ test('only an unappealed held report that is not a test can be appealed', () => 
   assert.equal(canRequestReview({ ...held, workflowStatus: 'resolved' }), false);
   assert.equal(canRequestReview({ ...held, testOnly: true }), false);
   assert.equal(canRequestReview({ ...held, appeal: { status: 'kept-private' } }), false);
+  // A report that waited for a person (automatic review off) is already in front of one.
+  assert.equal(canRequestReview({ ...held, reviewReason: 'staff-review' }), false);
   assert.deepEqual(parseReviewRequest({ action: 'request-review', reportId: id, note: '  ' }), {
     reportId: id,
   });

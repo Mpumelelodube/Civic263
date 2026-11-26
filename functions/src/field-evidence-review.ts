@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 import { checkReport, REVIEW_MODEL, REVIEW_POLICY } from './automatic-review.ts';
+import { reserveAutomaticReview } from './review-controls.ts';
 
 export async function reviewFieldEvidence(checkId: string, assess = checkReport) {
   const db = getFirestore();
@@ -14,16 +15,8 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
     if (data.reviewLeaseUntil > Date.now()) throw new Error('Visit privacy review is running');
     const attempts = (data.reviewAttempts ?? 0) + 1;
     let capped = data.testOnly === true || attempts > 5;
-    if (!capped && attempts === 1) {
-      const quota = db.collection('reviewDailyUsage').doc(new Date().toISOString().slice(0, 10));
-      const count = (await transaction.get(quota)).data()?.count ?? 0;
-      if (count >= 100) capped = true;
-      else
-        transaction.set(quota, {
-          count: count + 1,
-          expiresAt: new Date(Date.now() + 2 * 86400000),
-        });
-    }
+    // Switched off or past the daily limit: no paid call, and the visit photos stay private.
+    if (!capped) capped = (await reserveAutomaticReview(transaction, attempts === 1)) !== 'allowed';
     transaction.update(ref, {
       reviewLease: lease,
       reviewLeaseUntil: Date.now() + 300000,

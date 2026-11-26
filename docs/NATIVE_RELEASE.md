@@ -69,7 +69,14 @@ Account recovery links Firebase credentials to the existing resident UID. Sign-i
 
 ## Upload cleanup and remaining release gates
 
-`python scripts/cleanup-abandoned-visit-uploads.py` is an admin-only dry run. `--self-test` checks its exclusions. `--apply` removes only superseded upload leases older than seven days for an already committed community visit, after rechecking retained paths and using a Storage generation precondition. It preserves every retained original, public derivative, uncommitted attempt and ambiguous initial submission. The live dry run found no eligible objects and deleted nothing. No broader runtime Storage permission was added.
+`python scripts/cleanup-orphans.py` is an admin-only orphan sweep and dry run by default. It replaced the earlier tool, which only handled superseded community-visit uploads.
+
+- It covers every photo no report, visit or public issue still names, once the photo is at least seven days old.
+- `--self-test` checks its exclusions.
+- `--apply` rechecks each affected report's records just before deleting, and deletes with a Storage generation precondition.
+- It never touches referenced originals, adopted public derivatives, recent uploads or unrecognised names.
+
+The 26 November live dry run recognised all 34 stored objects, all still referenced, and deleted nothing. No runtime Storage list permission was added. See the [operations runbook](OPERATIONS_RUNBOOK.md).
 
 Public rollout still needs build-6 iPad draft recovery and report-link retests, deferred physical iPhone coverage, geofence/termination acceptance, account deletion/lifecycle and the existing operational/privacy/pilot gates. Internal TestFlight processing is verified through build 6, with existing tester access retained; App Store publication was not performed.
 

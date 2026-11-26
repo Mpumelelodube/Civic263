@@ -17,6 +17,7 @@ import {
   KEEP_PRIVATE_LABELS,
   RESPONSE_TARGET_WORKING_DAYS,
   addWorkingDays,
+  awaitingStaffReview,
   canRequestReview,
   complaintPriority,
   flagKey,
@@ -28,12 +29,14 @@ import {
   type ComplaintTarget,
   type FlagStatus,
   type ResidentAppeal,
+  type StaffDecision,
 } from '../../packages/domain/src/moderation.ts';
 import { toPublicIncident } from '../../packages/domain/src/publication.ts';
 import { readResolution } from '../../packages/domain/src/report-resolution.ts';
 import { UUID_PATTERN } from '../../packages/domain/src/report-submission.ts';
 import type { IncidentRecord } from '../../packages/domain/src/models.ts';
 import { buildIncident } from './automatic-review.ts';
+import { automaticReviewEnabled } from './review-controls.ts';
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const db = () => getFirestore();
@@ -89,6 +92,7 @@ export async function requestHumanReview(value: unknown, uid: string): Promise<R
         publicationStatus: report.publicationStatus,
         workflowStatus: report.workflowStatus,
         reviewStatus: report.reviewStatus,
+        reviewReason: report.reviewReason ?? null,
         testOnly: report.receipt?.testOnly === true,
       })
     )
@@ -435,7 +439,8 @@ export async function runStaffCommand(value: unknown, auth: StaffAuth) {
   const operator = await assertStaff(auth);
   const command = parsed(() => parseStaffCommand(value));
   const firestore = db();
-  if (command.action === 'staff-profile') return operator;
+  if (command.action === 'staff-profile')
+    return { ...operator, automaticReview: await automaticReviewEnabled() };
   if (command.action === 'staff-queue') {
     if (command.queue === 'appeals') {
       const page = await firestore
@@ -476,23 +481,37 @@ export async function runStaffCommand(value: unknown, auth: StaffAuth) {
       .where('moderationStatus', '==', 'pending')
       .limit(200)
       .get();
-    return {
-      items: page.docs
-        .filter((doc) => doc.data().receipt?.testOnly !== true)
-        .map((doc) => {
-          const item = doc.data();
-          return {
-            reportId: doc.id,
-            reference: item.receipt.reference,
-            categoryId: item.categoryId,
-            reviewReason: item.reviewReason ?? null,
-            createdAt: item.createdAt,
-            appeal: item.appeal ?? null,
-            photoCount: (item.rawMediaPaths ?? []).length,
-          };
-        })
-        .sort(byOldest('createdAt')),
-    };
+    const items = page.docs
+      .filter((doc) => doc.data().receipt?.testOnly !== true)
+      .map((doc) => {
+        const item = doc.data();
+        const waiting = awaitingStaffReview({
+          moderationStatus: item.moderationStatus,
+          publicationStatus: item.publicationStatus,
+          reviewStatus: item.reviewStatus,
+          reviewReason: item.reviewReason ?? null,
+          staffDecision: item.staffDecision ?? null,
+        });
+        return {
+          reportId: doc.id,
+          reference: item.receipt.reference,
+          categoryId: item.categoryId,
+          reviewReason: item.reviewReason ?? null,
+          createdAt: item.createdAt,
+          appeal: item.appeal ?? null,
+          staffDecision: item.staffDecision ?? null,
+          photoCount: (item.rawMediaPaths ?? []).length,
+          // Reports that no automatic check has seen carry the same response target as appeals.
+          dueBy: waiting ? dueBy(item.createdAt) : null,
+        };
+      });
+    // Reports waiting for a person first, then everything else, oldest first.
+    items.sort(
+      (left, right) =>
+        Number(!left.dueBy) - Number(!right.dueBy) ||
+        String(left.createdAt).localeCompare(String(right.createdAt)),
+    );
+    return { items };
   }
   if (command.action === 'staff-report') return readStaffReport(command.reportId);
   if (command.action === 'staff-publish') return staffPublish(command, auth.uid);
@@ -500,8 +519,38 @@ export async function runStaffCommand(value: unknown, auth: StaffAuth) {
     const ref = firestore.collection('reports').doc(command.reportId);
     return firestore.runTransaction(async (transaction) => {
       const report = (await transaction.get(ref)).data();
+      if (
+        report &&
+        report.appeal?.status !== 'open' &&
+        awaitingStaffReview({
+          moderationStatus: report.moderationStatus,
+          publicationStatus: report.publicationStatus,
+          reviewStatus: report.reviewStatus,
+          reviewReason: report.reviewReason ?? null,
+          staffDecision: report.staffDecision ?? null,
+        })
+      ) {
+        // Automatic review was off, so this is the first decision anyone has made on it.
+        const staffDecision: StaffDecision = {
+          status: 'kept-private',
+          decidedAt: now(),
+          reason: command.reason,
+          ...(command.note ? { note: command.note } : {}),
+        };
+        transaction.update(ref, { staffDecision });
+        audit(transaction, {
+          action: 'keep-private',
+          reportId: command.reportId,
+          reason: command.reason,
+          staffUid: auth.uid,
+        });
+        return { staffDecision };
+      }
       if (!report || report.appeal?.status !== 'open')
-        throw new HttpsError('failed-precondition', 'This report has no open appeal.');
+        throw new HttpsError(
+          'failed-precondition',
+          'This report has no open appeal and is not waiting for a person.',
+        );
       const appeal: ResidentAppeal = {
         ...(report.appeal as ResidentAppeal),
         status: 'kept-private',
@@ -681,6 +730,18 @@ async function readStaffReport(reportId: string) {
     publicationStatus: report.publicationStatus,
     reviewStatus: report.reviewStatus,
     reviewReason: report.reviewReason ?? null,
+    staffDecision: report.staffDecision ?? null,
+    dueBy:
+      report.receipt?.testOnly !== true &&
+      awaitingStaffReview({
+        moderationStatus: report.moderationStatus,
+        publicationStatus: report.publicationStatus,
+        reviewStatus: report.reviewStatus,
+        reviewReason: report.reviewReason ?? null,
+        staffDecision: report.staffDecision ?? null,
+      })
+        ? dueBy(report.createdAt)
+        : null,
     withdrawn: report.moderationStatus === 'withdrawn',
     ownerErased: !report.ownerUid,
     originals,
@@ -779,6 +840,8 @@ async function staffPublish(
         approvedPhotoIndexes: command.photos,
         reviewedAt: at,
         reviewPolicy: 'civic263-staff-review-v1',
+        // An earlier keep-private decision no longer describes a published report.
+        staffDecision: FieldValue.delete(),
         ...(appeal ? { appeal } : {}),
       });
       if (appeal)

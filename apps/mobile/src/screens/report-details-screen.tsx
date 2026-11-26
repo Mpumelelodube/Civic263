@@ -10,8 +10,8 @@ import {
   categoryLabel,
   HANDOFF_LABELS,
   KEEP_PRIVATE_LABELS,
-  REVIEW_LABELS,
-  REVIEW_REASONS,
+  reviewExplanation,
+  reviewLabel,
   WITHDRAWAL_LABELS,
   workflowLabel,
   type ComplaintTarget,
@@ -301,7 +301,7 @@ export function ReportDetailsView({
                       : detail.kind === 'owner'
                         ? detail.item.testOnly
                           ? 'Test report kept private'
-                          : REVIEW_LABELS[detail.item.reviewStatus]
+                          : reviewLabel(detail.item)
                         : detail.item.reviewMethod === 'staff'
                           ? 'Published after human review'
                           : 'Published after automatic checks'}
@@ -337,9 +337,9 @@ export function ReportDetailsView({
                 {detail.kind === 'owner' &&
                   !detail.item.withdrawal &&
                   detail.item.workflowStatus !== 'resolved' &&
-                  detail.item.reviewReason && (
+                  reviewExplanation(detail.item) && (
                     <AppText style={{ color: theme.muted }}>
-                      {REVIEW_REASONS[detail.item.reviewReason]}
+                      {reviewExplanation(detail.item)}
                     </AppText>
                   )}
                 <AppText variant="caption" style={{ color: theme.muted }}>
@@ -372,7 +372,7 @@ export function ReportDetailsView({
                     {detail.item.appeal?.status === 'open'
                       ? 'Corrections are paused while a person reviews this report. You can still withdraw it.'
                       : canCorrectReport(detail.item)
-                        ? 'You can correct the service, description, place or pin, or remove photos, until it is published. Corrections are checked again automatically.'
+                        ? 'You can correct the service, description, place or pin, or remove photos, until it is published. Corrected reports are reviewed again before publication.'
                         : detail.item.publicationStatus === 'published'
                           ? 'Published reports cannot be edited. Withdraw it and send a new report if something is wrong.'
                           : 'This report cannot be corrected right now. You can still withdraw it.'}

@@ -48,7 +48,7 @@ Three more strict actions use the existing `submitReport` callable, so no new HT
 - `correct-report`: unpublished reports only, at most three times. It carries the revision it was based on, overwrites the earlier version, deletes removed photos and writes a private `resident-corrected` event, which the `reviewResolution` worker turns into a fresh automatic review.
 - `delete-account`: erases or de-identifies every identity-linked record and private original, keeps anonymous published issues and fix checks, then deletes the Auth user. Each call works within a time budget and reports `partial` or `complete`; the app repeats it until complete. A hashed `accountDeletions` marker (30-day TTL, the seventh TTL policy) makes `submitReport` refuse a deleted identity's still-valid ID token.
 
-Review workers now delete derivative batches that their record never adopted. A review racing a withdrawal or erasure therefore leaves no public photos behind. All of these deletions use exact object names, because the backend photo role deliberately has no `storage.objects.list`. Unreferenced uploads from abandoned attempts are left for the operator orphan cleanup (P03). `npm run test:lifecycle` covers these paths against demo emulators, including through the built callable.
+Review workers now delete derivative batches that their record never adopted. A review racing a withdrawal or erasure therefore leaves no public photos behind. All of these deletions use exact object names, because the backend photo role deliberately has no `storage.objects.list`. Unreferenced uploads from abandoned attempts are left for the weekly orphan sweep, `scripts/cleanup-orphans.py` (P03). `npm run test:lifecycle` covers these paths against demo emulators, including through the built callable.
 
 Deployment prerequisites, in order:
 
@@ -80,6 +80,27 @@ The backend and console were deployed on 25 November 2026, as the user approved:
 
 `npm run test:moderation` covers these paths against demo emulators. A headless-browser check also drove the console through sign-in refusal, appeal publication and complaint restoration.
 
+## Costs, monitoring, recovery and retention (P03)
+
+Rules, procedures and the drill log are in [the operations runbook](OPERATIONS_RUNBOOK.md).
+
+**Automatic review switch.** Paid automatic review (Vision and Gemini) runs only while the Firestore document `operations/automaticReview` says `enabled: true`. `functions/src/review-controls.ts` checks it on every attempt of all three review paths: reports, resolution photos and visit photos. A missing document means off. While review is off:
+
+- New and corrected reports are held with `reviewReason: 'staff-review'` and wait for an operator.
+- New resolution and visit photos stay private.
+
+`scripts/manage-operations.py` switches review on or off. The user switched it off on 26 November 2026 to avoid AI costs; it takes effect with the next Functions deployment.
+
+Operators keep reports private with a `staffDecision` on the report, which the resident sees. The owner DTO, the Held queue and `staff-profile` expose the new state.
+
+**Tools:**
+
+- `scripts/setup-operations.py` plans or applies the operational settings: the $5 budget for this project only, an alert channel, the uptime check, a backend-error metric and alerts, Firestore point-in-time recovery, delete protection, daily 7-day backups, and a function-image cleanup rule.
+- `scripts/restore-drill.py` restores into a temporary database, checks it and deletes it.
+- `scripts/cleanup-orphans.py` sweeps unreferenced photos.
+
+`npm run test:publication` and `npm run test:moderation` cover the switch: off by default, stopping retries, never calling the provider, and operator decisions.
+
 ## Backend dependency maintenance - 12 November 2026
 
 The pre-deployment production audit found high-severity advisories in the existing image and request parsers. Sharp is now pinned to 0.35.5 and the deployed Functions package pins body-parser 2.4.0 through its override. These versions address the [Sharp native decoder advisories](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) and [body-parser compressed-request denial of service](https://github.com/advisories/GHSA-27r3-jxmh-p828). JPEG validation, metadata removal and the publication/resolution integration checks passed with the updated image library.
@@ -96,7 +117,7 @@ The `reviewReport` Firestore creation trigger claims a processing lease and runs
 4. Eligible text-only reports, or reports with at least one supplied photo that passes both checks get separate, metadata-stripped public derivatives, a canonical incident, a public projection and an audit record. Public coordinates are rounded to three decimal places. The original report and media stay private.
 5. Uncertain, irrelevant or privacy-sensitive reports stay private with an owner-visible reason. Provider failures retry up to five attempts, then stay private. A duplicate event does not create another incident.
 
-The pilot limits automatic review to 100 new reports per UTC day, intake to ten new reports per resident identity per day, and each function to two instances. Existing project billing covers metered Functions, Storage, Vision and model requests. Expiring quota collections use Firestore TTL; reports and receipts do not expire through these quota policies.
+Automatic review runs only while an administrator has switched it on (see P03 above); a report that arrives while it is off waits for an operator. When on, the pilot limits automatic review to 100 new reports per UTC day. Intake is limited to ten new reports per resident identity per day, and each function to two instances. Existing project billing covers metered Functions, Storage, Vision and model requests. Expiring quota collections use Firestore TTL; reports and receipts do not expire through these quota policies.
 
 Automated checks can make mistakes. Publication is not an inspection, fact verification or an authority acknowledgement. Responsible municipality/service assignment remains unconfirmed rather than being invented. Manual operations, duplicate merging, municipal handoffs and evidenced resolution updates are later workflow work.
 

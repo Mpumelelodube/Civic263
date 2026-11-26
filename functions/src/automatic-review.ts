@@ -11,6 +11,7 @@ import type { CategoryId } from '../../packages/domain/src/categories.ts';
 import type { ReportLocation } from '../../packages/domain/src/locations.ts';
 import type { SubmissionReceipt } from '../../packages/domain/src/report-submission.ts';
 import { containsContactDetails } from '../../packages/domain/src/moderation.ts';
+import { reserveAutomaticReview } from './review-controls.ts';
 
 export const REVIEW_MODEL = 'gemini-3.1-flash-lite';
 export const REVIEW_POLICY = 'civic263-publication-v1';
@@ -261,14 +262,15 @@ export async function reviewSubmittedReport(reportId: string, assess = checkRepo
     }
     if (data.reviewLeaseUntil > Date.now()) throw new Error('Review is already running');
     const attempts = (data.reviewAttempts ?? 0) + 1;
-    if (attempts === 1) {
-      const quota = db.collection('reviewDailyUsage').doc(new Date().toISOString().slice(0, 10));
-      const count = (await transaction.get(quota)).data()?.count ?? 0;
-      if (count >= 100) {
-        transaction.update(ref, { reviewStatus: 'held', reviewReason: 'unavailable' });
-        return null;
-      }
-      transaction.set(quota, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
+    const allowance = await reserveAutomaticReview(transaction, attempts === 1);
+    if (allowance !== 'allowed') {
+      // No paid call: the report waits privately in the operators' Held queue.
+      transaction.update(ref, {
+        reviewStatus: 'held',
+        reviewReason: allowance === 'switched-off' ? 'staff-review' : 'unavailable',
+        reviewLeaseUntil: 0,
+      });
+      return null;
     }
     transaction.update(ref, {
       reviewLease: lease,

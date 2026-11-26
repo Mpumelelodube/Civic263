@@ -40,6 +40,9 @@ const server = await new Promise((resolve) => {
 const base = `http://127.0.0.1:${server.address().port}`;
 const db = getFirestore();
 const bucket = getStorage().bucket();
+// Paid automatic review is off unless switched on; these fixtures use a stub provider.
+const reviewSwitch = db.collection('operations').doc('automaticReview');
+await reviewSwitch.set({ enabled: true });
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const owner = `owner-${randomUUID()}`;
 const proposer = `proposer-${randomUUID()}`;
@@ -273,6 +276,77 @@ try {
   );
   console.log(
     'PASS: an operator can publish a held report with chosen photos and written text, audited',
+  );
+
+  // 3b. Automatic review switched off: reports wait for a person, who publishes or keeps private.
+  await reviewSwitch.set({ enabled: false });
+  assert.equal((await run({ action: 'staff-profile' })).automaticReview, false);
+  const noProvider = async () => {
+    throw new Error('Switched-off review must not call a paid provider');
+  };
+  const waiting = await fixture(owner, { photos: 1, publish: false });
+  const waitingToo = await fixture(owner, { publish: false });
+  await reviewSubmittedReport(waiting, noProvider);
+  await reviewSubmittedReport(waitingToo, noProvider);
+  const waitingDetail = await readResidentReport({ reportId: waiting }, owner);
+  assert.equal(waitingDetail.reviewStatus, 'held');
+  assert.equal(waitingDetail.reviewReason, 'staff-review');
+  await assert.rejects(requestHumanReview({ action: 'request-review', reportId: waiting }, owner), {
+    code: 'failed-precondition',
+  });
+  const held = (await run({ action: 'staff-queue', queue: 'held' })).items;
+  const firstAutomatic = held.findIndex((item) => !item.dueBy);
+  const waitingRow = held.findIndex((item) => item.reportId === waiting);
+  assert.ok(waitingRow >= 0 && held[waitingRow].dueBy);
+  assert.ok(firstAutomatic === -1 || waitingRow < firstAutomatic, 'waiting reports come first');
+  await run({
+    action: 'staff-keep-private',
+    reportId: waiting,
+    reason: 'duplicate',
+    note: 'EMULATOR ONLY decision note',
+  });
+  const decidedDetail = await readResidentReport({ reportId: waiting }, owner);
+  assert.equal(decidedDetail.staffDecision.reason, 'duplicate');
+  assert.equal(decidedDetail.staffDecision.note, 'EMULATOR ONLY decision note');
+  await assert.rejects(run({ action: 'staff-keep-private', reportId: waiting, reason: 'other' }), {
+    code: 'failed-precondition',
+  });
+  assert.equal(
+    (await run({ action: 'staff-queue', queue: 'held' })).items.find(
+      (item) => item.reportId === waiting,
+    ).dueBy,
+    null,
+  );
+  // A correction is a new version that waits for a fresh decision.
+  await correctReport(
+    {
+      action: 'correct-report',
+      reportId: waiting,
+      revision: 0,
+      categoryId: 'roads',
+      description: 'EMULATOR ONLY corrected description',
+      landmark: 'EMULATOR ONLY corrected landmark',
+      location: anchor,
+      keepPhotos: [0],
+    },
+    owner,
+  );
+  await reviewSubmittedReport(waiting, noProvider);
+  const corrected = await readResidentReport({ reportId: waiting }, owner);
+  assert.equal(corrected.reviewReason, 'staff-review');
+  assert.equal(corrected.staffDecision, undefined);
+  await run({
+    action: 'staff-publish',
+    reportId: waitingToo,
+    title: 'EMULATOR ONLY hand-reviewed issue',
+    summary: 'EMULATOR ONLY summary written while automatic review was off.',
+    area: 'EMULATOR ONLY area',
+    photos: [],
+  });
+  assert.equal((await get(`/incidents/${waitingToo}`)).body.reviewMethod, 'staff');
+  await reviewSwitch.set({ enabled: true });
+  console.log(
+    'PASS: with automatic review off, reports wait for a person with a deadline, no paid call runs, and operators publish or keep private',
   );
 
   // 4. Photo complaints: three reporters hide one photo without renumbering; restore and remove.

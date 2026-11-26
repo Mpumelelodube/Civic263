@@ -20,6 +20,8 @@ Status: behaviour agreed, and backend and console deployed, on 25 November 2026 
 
 There is one appeal per report. Test reports cannot be appealed.
 
+**While automatic review is switched off** (26 November 2026 onwards; see the [operations runbook](OPERATIONS_RUNBOOK.md)), no automatic check runs. Every new or corrected report waits privately for a person, and the owner sees "Waiting for a person to review". There is no appeal, because a person is already reviewing it. The same two-working-day target applies from the time the report arrives. An operator either publishes it, or keeps it private with one of the five reasons plus an optional note, which the owner sees.
+
 **Report a concern.** Anyone using the app can report a public issue, one public photo, or the photos from one community visit, with a reason and an optional 300-character note. Reports are private: the poster is never told who reported them. Each identity counts once per item, with at most 20 reports a day. The app collects these reports only from attested app installations. The web portal has no reporting form yet, because anonymous web input would let one person create the three identities needed to hide something.
 
 When three different identities have reported an item, it is hidden:
@@ -49,7 +51,7 @@ Firebase multi-factor sign-in requires upgrading to Identity Platform. That upgr
 
 - **Appeals**, oldest first.
 - **Complaints**, priority first, then deadline.
-- **Held reports**: every report automatic review kept private. An operator may publish one without an appeal.
+- **Held reports**: reports waiting for a person while automatic review is off come first, with their deadlines. Then come all reports automatic review kept private, which an operator may publish without an appeal. The sidebar shows whether automatic review is on.
 - **Blocked identities.**
 
 Each report page shows the private submission, original photos, the automatic review reason, the appeal note, the public record with hidden and removed photos, and what complainants wrote.
@@ -59,7 +61,7 @@ Each report page shows the private submission, original photos, the automatic re
 | Action            | Effect                                                                                                                                                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Publish           | Creates the public record from the operator's title, summary and area (no contact details, links or handles) and the chosen photos, re-encoded like automatic derivatives. The report must still be held and unchanged since the operator opened it. |
-| Keep private      | Records one of five reasons, plus an optional note, that the resident sees. Only for an open appeal.                                                                                                                                                 |
+| Keep private      | Records one of five reasons, plus an optional note, that the resident sees. Only for an open appeal or a report waiting for a person.                                                                                                                |
 | Restore / dismiss | Returns hidden content to public view and closes the complaint. Hiding it again needs three new reporters.                                                                                                                                           |
 | Remove            | **Issue**: unpublished; the owner's report is marked rejected; its public photos are deleted; the private originals stay with the owner. **Photo or visit photos**: that public derivative is deleted.                                               |
 | Block             | Hashed by identity. The blocked person cannot add reports, visits, corrections, appeals or complaints, but can still read, withdraw and delete their data. Operators never see the UID. Unblocking needs a reason.                                   |
@@ -80,11 +82,17 @@ Response targets count working days Monday to Friday (UTC). Public holidays are 
 - Complaint records hold the target, reason, optional note, time and a SHA-256 of the reporter's UID. Account deletion (P01) deletes them; the aggregate counts on the reported item stay.
 - Appeals hold the resident's note. Withdrawal or account deletion deletes the appeal.
 - Blocks are keyed by a hash of the UID and are deleted with the account.
-- `moderationAudit` keeps action, target, outcome, reason and operator UID, with no resident identity. Its retention is part of P03.
+- `moderationAudit` keeps action, target, outcome, reason and operator UID, with no resident identity. It is kept for the pilot; a period is to be agreed with the operating authority (P04). See the retention table in the [operations runbook](OPERATIONS_RUNBOOK.md).
 - Daily complaint counters expire through the eighth TTL policy (`complaintDailyUsage.expiresAt`).
 
 ## Verification
 
 - Domain unit tests: deadlines, eligibility, parsing, auto-hide threshold, priority and operator text rules.
-- `npm run test:moderation` against loopback demo emulators covers operator authorization, both appeal decisions, photo, issue and visit complaints (hide, restore, re-hide, remove), community pausing, blocks, withdrawal closing an appeal, account deletion erasing complaints, and the built `staffCommand` callable.
+- `npm run test:moderation` against loopback demo emulators covers:
+  - operator authorization;
+  - both appeal decisions;
+  - reports waiting for a person while automatic review is off, including queue order, deadlines, both decisions and correction;
+  - photo, issue and visit complaints (hide, restore, re-hide, remove) and community pausing;
+  - blocks, withdrawal closing an appeal, and account deletion erasing complaints;
+  - the built `staffCommand` callable.
 - Device and browser acceptance follow the next app build and the console deployment.

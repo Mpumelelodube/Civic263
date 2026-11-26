@@ -122,6 +122,12 @@ button.danger:hover {
   background: #fbeaec;
   color: #a32c36;
 }
+.review-off {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff4dc;
+  color: #6b4a00;
+}
 .review-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

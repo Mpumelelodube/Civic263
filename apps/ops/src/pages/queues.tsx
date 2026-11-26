@@ -185,26 +185,39 @@ type Held = {
   reviewReason: ReviewReason | null;
   createdAt: string;
   appeal: { status: string } | null;
+  staffDecision: { status: string } | null;
   photoCount: number;
+  dueBy: string | null;
 };
+/** Operator wording for why a report is held; residents see REVIEW_REASONS instead. */
+export function heldBecause(item: Pick<Held, 'reviewReason' | 'staffDecision'>) {
+  if (item.staffDecision) return 'Kept private by a reviewer';
+  if (item.reviewReason === 'staff-review') return 'Waiting for a person (automatic review off)';
+  return item.reviewReason ? REVIEW_REASONS[item.reviewReason] : '—';
+}
 export function HeldQueue() {
   return (
     <QueuePage<Held>
       title="Held reports"
-      description="Every report automatic checks kept private. You can publish one without an appeal if it is clearly a useful public issue."
+      description="Reports waiting for a person while automatic review is off, listed first, then every report automatic checks kept private. Publish a report if it is clearly a useful public issue, or keep a waiting report private with a reason."
       queue="held"
       empty="No held reports."
-      head={['Report', 'Held because', 'Photos', 'Received', 'Appeal']}
+      head={['Report', 'Status', 'Photos', 'Received', 'Deadline']}
       row={(item) => (
         <tr key={item.reportId}>
           <td>
             <Link to={`/reports/${item.reportId}`}>{item.reference}</Link>
             <span className="cell-detail">{categoryLabel(item.categoryId)}</span>
           </td>
-          <td>{item.reviewReason ? REVIEW_REASONS[item.reviewReason] : '—'}</td>
+          <td>
+            {heldBecause(item)}
+            {item.appeal && (
+              <span className="cell-detail">Appeal {item.appeal.status.replace('-', ' ')}</span>
+            )}
+          </td>
           <td className="numeric">{item.photoCount}</td>
           <td>{formatDate(item.createdAt)}</td>
-          <td>{item.appeal ? item.appeal.status.replace('-', ' ') : '—'}</td>
+          <td>{item.dueBy ? <Due at={item.dueBy} /> : '—'}</td>
         </tr>
       )}
     />

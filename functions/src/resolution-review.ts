@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 import { checkReport, REVIEW_MODEL, REVIEW_POLICY } from './automatic-review.ts';
+import { reserveAutomaticReview } from './review-controls.ts';
 import { readResolution } from '../../packages/domain/src/report-resolution.ts';
 import { toPublicIncident } from '../../packages/domain/src/publication.ts';
 import type { IncidentRecord } from '../../packages/domain/src/models.ts';
@@ -31,19 +32,15 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
       });
       return { ...data, attempts, capped: true };
     }
-    if (attempts === 1) {
-      const quota = db.collection('reviewDailyUsage').doc(new Date().toISOString().slice(0, 10));
-      const count = (await transaction.get(quota)).data()?.count ?? 0;
-      if (count >= 100) {
-        // No model call after the daily cap; finalize private through the same projection path.
-        transaction.update(ref, {
-          resolutionReviewAttempts: 5,
-          resolutionReviewLease: lease,
-          resolutionReviewUntil: Date.now() + 300000,
-        });
-        return { ...data, attempts: 5, capped: true };
-      }
-      transaction.set(quota, { count: count + 1, expiresAt: new Date(Date.now() + 2 * 86400000) });
+    if ((await reserveAutomaticReview(transaction, attempts === 1)) !== 'allowed') {
+      // No paid call while review is switched off or past the daily limit; the new photos are
+      // finalized private through the same projection path.
+      transaction.update(ref, {
+        resolutionReviewAttempts: 5,
+        resolutionReviewLease: lease,
+        resolutionReviewUntil: Date.now() + 300000,
+      });
+      return { ...data, attempts: 5, capped: true };
     }
     transaction.update(ref, {
       resolutionReviewLease: lease,

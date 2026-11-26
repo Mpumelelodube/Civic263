@@ -28,6 +28,9 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const db = getFirestore();
 const bucket = getStorage().bucket();
 const ownerUid = `publication-test-${randomUUID()}`;
+// Paid automatic review is off unless switched on; these fixtures use a stub provider.
+const reviewSwitch = db.collection('operations').doc('automaticReview');
+await reviewSwitch.set({ enabled: true });
 
 async function fixture(testOnly = false) {
   const id = createHash('sha256').update(randomUUID()).digest('hex').slice(0, 40);
@@ -198,6 +201,51 @@ try {
   assert.equal(failed.reviewReason, 'unavailable');
   assert.equal((await fetch(`${base}/incidents/${unavailable}`)).status, 404);
   console.log('PASS: privacy holds, test isolation and five-attempt provider failure limit');
+
+  // With no switch document at all, paid review is off: nothing calls the provider.
+  const noProvider = async () => {
+    throw new Error('Switched-off review must not call a paid provider');
+  };
+  await reviewSwitch.delete();
+  const waiting = await fixture();
+  await reviewSubmittedReport(waiting, noProvider);
+  const waitingReport = (await db.collection('reports').doc(waiting).get()).data();
+  assert.equal(waitingReport.reviewStatus, 'held');
+  assert.equal(waitingReport.reviewReason, 'staff-review');
+  assert.equal((await fetch(`${base}/incidents/${waiting}`)).status, 404);
+  // Switching off during retries stops the next attempt before any paid call.
+  await reviewSwitch.set({ enabled: true });
+  const interrupted = await fixture();
+  await assert.rejects(
+    reviewSubmittedReport(interrupted, async () => {
+      throw new Error('Simulated provider failure');
+    }),
+    /needs a retry/,
+  );
+  await reviewSwitch.set({ enabled: false });
+  await reviewSubmittedReport(interrupted, noProvider);
+  const stopped = (await db.collection('reports').doc(interrupted).get()).data();
+  assert.equal(stopped.reviewStatus, 'held');
+  assert.equal(stopped.reviewReason, 'staff-review');
+  // New resolution photos on a published issue stay private without a paid call.
+  await db
+    .collection('reports')
+    .doc(id)
+    .update({
+      resolution: { ...resolution, evidenceStatus: 'pending', photoCount: 0 },
+      resolutionEvidence: { rawMediaPaths: legacyPaths },
+      resolutionReviewAttempts: 0,
+      resolutionReviewUntil: 0,
+    });
+  await reviewResolutionEvidence(id, noProvider);
+  assert.equal(
+    (await db.collection('reports').doc(id).get()).data().resolution.evidenceStatus,
+    'private',
+  );
+  await reviewSwitch.set({ enabled: true });
+  console.log(
+    'PASS: automatic review is off by default, stops retries when switched off and never calls the provider',
+  );
   console.log('Publication integration checks passed against demo emulators only.');
 } finally {
   server.close();

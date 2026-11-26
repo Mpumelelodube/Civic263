@@ -13,7 +13,7 @@ import { getStaffServices, staffCall, staffError } from './lib/firebase';
 import { AppealsQueue, BlocksQueue, ComplaintsQueue, HeldQueue } from './pages/queues';
 import { ReportReview } from './pages/report-review';
 
-type Operator = { email: string; role: string };
+type Operator = { email: string; role: string; automaticReview: boolean };
 
 function SignIn({ notice }: { notice?: string | null }) {
   const services = getStaffServices();
@@ -142,6 +142,11 @@ export function App() {
             <NavLink to="/blocks">Blocked identities</NavLink>
           </nav>
           <div className="sidebar-note">
+            <p className={operator.automaticReview ? undefined : 'review-off'}>
+              {operator.automaticReview
+                ? 'Automatic review is on.'
+                : 'Automatic review is off. Every new report waits for you in Held reports.'}
+            </p>
             <p>
               Target: a first decision within {RESPONSE_TARGET_WORKING_DAYS} working days. Personal
               information and danger first.

@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   categoryLabel,
-  REVIEW_LABELS,
+  reviewLabel,
   workflowLabel,
   type ReportDraft,
   type ResidentReport,
@@ -39,7 +39,7 @@ function statusLabel(row: ReportHistoryRow) {
         ? `${workflowLabel(row.item, true)}${row.item.testOnly ? ' / TEST ONLY' : ''}`
         : row.item.testOnly
           ? 'Test server only - no real report filed'
-          : REVIEW_LABELS[row.item.reviewStatus];
+          : reviewLabel(row.item);
   return row.item.receipt
     ? row.item.receipt.testOnly
       ? 'Test server only'
@@ -134,7 +134,7 @@ export function MyReportsScreen() {
         {saved.receipt
           ? saved.receipt.testOnly
             ? 'Test server receipt - no real report filed'
-            : 'Received by Civic263 - automatic review will follow'
+            : 'Received by Civic263 - it will be reviewed before publication'
           : 'Draft saved on this device'}
       </AppText>
       <ActionButton

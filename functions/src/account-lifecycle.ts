@@ -303,6 +303,8 @@ export async function correctReport(value: unknown, uid: string): Promise<Correc
       reviewReason: null,
       reviewAttempts: 0,
       reviewLeaseUntil: 0,
+      // A corrected report is a new version; an operator decides on it afresh.
+      staffDecision: FieldValue.delete(),
     });
     transaction.create(db.collection('reportEvents').doc(`${input.reportId}_corrected_${next}`), {
       event: 'resident-corrected',

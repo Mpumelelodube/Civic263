@@ -78,7 +78,22 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - Multi-factor sign-in for operators (needs Identity Platform).
   - The P04 support contact, and confirmation of the rules with the operating authority.
 
-- [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures.
+- [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures. Rules agreed 26 November in the [operations runbook](../docs/OPERATIONS_RUNBOOK.md):
+  - A $5 monthly budget for this project only, alerts only.
+  - Paid automatic review (Vision and Gemini) switched off but kept; reports wait for an operator meanwhile.
+  - A 7-day recovery window (point-in-time recovery and daily backups).
+  - Unpublished reports kept until the resident removes them.
+
+  Built and tested:
+  - The review switch (`review-controls.ts`, `manage-operations.py`), with the waiting-for-a-person state for residents and operators.
+  - Unit tests (75) and the publication, community, lifecycle and moderation emulator suites.
+  - `setup-operations.py` (budget, alerts, uptime check, recovery, image cleanup), `restore-drill.py`, and `cleanup-orphans.py`, which replaces the visit-only tool. Its live dry run recognised all 34 objects and found none eligible.
+
+  Still open:
+  - Production deploy and apply. The deploy was stopped by the permission check pending the administrator's approval, so automatic review is still on in production until Functions are deployed.
+  - The first restore drill.
+  - App build for the new resident wording.
+
 - [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.
 
 ## Later product backlog

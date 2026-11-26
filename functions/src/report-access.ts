@@ -59,6 +59,16 @@ export function toResidentReport(snapshot: DocumentSnapshot): ResidentReport {
     ...(item.moderationHold
       ? { moderationHold: { status: item.moderationHold.status, since: item.moderationHold.since } }
       : {}),
+    ...(item.staffDecision
+      ? {
+          staffDecision: {
+            status: item.staffDecision.status,
+            decidedAt: item.staffDecision.decidedAt,
+            reason: item.staffDecision.reason,
+            ...(item.staffDecision.note ? { note: item.staffDecision.note } : {}),
+          },
+        }
+      : {}),
     ...(item.moderationStatus === 'withdrawn' && item.withdrawal
       ? {
           withdrawal: {

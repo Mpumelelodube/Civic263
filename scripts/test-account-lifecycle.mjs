@@ -36,6 +36,8 @@ const server = await new Promise((resolve) => {
 const base = `http://127.0.0.1:${server.address().port}`;
 const db = getFirestore();
 const bucket = getStorage().bucket();
+// Paid automatic review is off unless switched on; these fixtures use a stub provider.
+await db.collection('operations').doc('automaticReview').set({ enabled: true });
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const owner = `owner-${randomUUID()}`;
 const proposer = `proposer-${randomUUID()}`;

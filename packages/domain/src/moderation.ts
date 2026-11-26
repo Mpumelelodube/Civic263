@@ -29,6 +29,30 @@ export interface ResidentAppeal {
   reason?: KeepPrivateReason;
   note?: string;
 }
+/** An operator's decision on a report that waited for a person while automatic review was off. */
+export interface StaffDecision {
+  status: 'kept-private';
+  decidedAt: string;
+  reason: KeepPrivateReason;
+  note?: string;
+}
+
+/** Held without any automatic check, because an administrator switched automatic review off. */
+export function awaitingStaffReview(report: {
+  moderationStatus: ModerationStatus;
+  publicationStatus: string;
+  reviewStatus: string;
+  reviewReason?: string | null;
+  staffDecision?: StaffDecision | null;
+}) {
+  return (
+    report.moderationStatus === 'pending' &&
+    report.publicationStatus === 'hidden' &&
+    report.reviewStatus === 'held' &&
+    report.reviewReason === 'staff-review' &&
+    !report.staffDecision
+  );
+}
 
 export type ComplaintReason =
   'personal-information' | 'offensive' | 'unsafe' | 'false-or-spam' | 'other';
@@ -93,6 +117,7 @@ export function canRequestReview(report: {
   publicationStatus: string;
   workflowStatus: WorkflowStatus;
   reviewStatus: string;
+  reviewReason?: string | null;
   appeal?: { status: AppealStatus } | null;
   testOnly?: boolean;
 }) {
@@ -101,6 +126,8 @@ export function canRequestReview(report: {
     report.publicationStatus === 'hidden' &&
     report.workflowStatus === 'received' &&
     report.reviewStatus === 'held' &&
+    // A report waiting for a person, or already decided by one, has nothing to appeal.
+    report.reviewReason !== 'staff-review' &&
     !report.appeal &&
     report.testOnly !== true
   );
