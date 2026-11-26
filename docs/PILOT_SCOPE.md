@@ -1,6 +1,6 @@
 # Spec: pilot boundaries, contacts, terms and rollout (P04)
 
-Status: decisions agreed on 26 November 2026 and implemented in source. Deployment of the website and backend changes needs the administrator's approval. The app changes need the next build. These are pilot operating rules, not legal conclusions; the privacy notice and terms need review by someone qualified in Zimbabwean law before public launch.
+Status: decisions agreed on 26 November 2026. The backend and public website were deployed the same day. The app changes need the next build. These are pilot operating rules, not legal conclusions; the privacy notice and terms need review by someone qualified in Zimbabwean law before public launch.
 
 ## Decisions
 
@@ -77,3 +77,4 @@ Service providers that process data on Civic263's behalf (Google Cloud and Fireb
   - danger categories are listed, and launch blockers are reported.
 - `scripts/tablet-panes.test.ts`: the composer checklist refuses a pin outside the pilot area.
 - `npm run check:launch` lists the open code-level blockers.
+- `scripts/test-live-backend.py`: the live server refuses a pin in Lusaka with the Zimbabwe-only message. All 14 live checks passed on 26 November 2026.

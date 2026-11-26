@@ -119,7 +119,10 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - the app build and device acceptance;
   - operator MFA.
 
-  Deployment of the site and backend awaits approval.
+  Deployed 26 November:
+  - All nine functions; the live server refuses a pin outside Zimbabwe, and all 14 live backend checks pass.
+  - The public site; the privacy, terms and about pages render live.
+  - The app wording waits for the app build. This item stays open until the support contact exists.
 
 ## Later product backlog
 

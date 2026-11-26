@@ -85,6 +85,10 @@ call('submitReport', payload, attested=False, expected=401)
 overflow = call('submitReport', {**payload, 'photos': photos + [{**photos[0], 'id': str(uuid.uuid4())}]}, expected=400)
 assert 'at most 3' in overflow['error']['message']
 print('PASS: sign-in, App Check and maximum-three-photo boundary', flush=True)
+abroad = call('submitReport', {**payload, 'submissionId': str(uuid.uuid4()), 'photos': [],
+                               'location': {'latitude': -15.4167, 'longitude': 28.2833, 'source': 'map'}}, expected=400)
+assert 'Zimbabwe only' in abroad['error']['message']
+print('PASS: a pin outside the Zimbabwe pilot area is refused', flush=True)
 receipt = call('submitReport', payload)
 assert receipt['testOnly'] is True and receipt['photoCount'] == 3
 report_id = receipt['reportId']
