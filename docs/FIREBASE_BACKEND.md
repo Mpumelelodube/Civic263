@@ -22,7 +22,7 @@ The owner uses Mark resolved in My reports, checks a fresh GPS fix within 20 m o
 
 Resolution evidence uploads use a bounded lease and unique private paths per attempt/lease, separately from initial photos. The app persists captured photos and freezes uncertain submissions for retry; a committed retry returns its original resolution time even after evidence ages. Owner details return the original and resolution photo sets separately.
 
-The private `reviewResolution` event trigger reviews only the new evidence of an already-public resolved report. It uses existing Vision/Gemini privacy screening with a repaired-scene prompt, the shared daily review cap, bounded retries and isolated derivative batches. Pending, failed or privacy-held photos have no public route. Approved derivatives are served only via `/incidents/{id}/resolution-photos/{index}`; the canonical private batch pointer never enters the public DTO. Review failure never reopens a report or publishes a private record. This checks device-supplied evidence, not independent physical presence or repair verification.
+The private `reviewResolution` event trigger reviews only the new evidence of an already-public resolved report. It uses the automatic photo screening (see Automatic publication) with repaired-scene wording, the shared daily review cap, bounded retries and isolated derivative batches. Pending, failed or privacy-held photos have no public route. Approved derivatives are served only via `/incidents/{id}/resolution-photos/{index}`; the canonical private batch pointer never enters the public DTO. Review failure never reopens a report or publishes a private record. This checks device-supplied evidence, not independent physical presence or repair verification.
 
 After server confirmation the owner sees Resolved by you. Public history says Resolved by reporter with the date. The source is a resident observation. See [the approved specification](REPORT_RESOLUTION_SPEC.md).
 
@@ -84,7 +84,7 @@ The backend and console were deployed on 25 November 2026, as the user approved:
 
 Rules, procedures and the drill log are in [the operations runbook](OPERATIONS_RUNBOOK.md).
 
-**Automatic review switch.** Paid automatic review (Vision and Gemini) runs only while the Firestore document `operations/automaticReview` says `enabled: true`. `functions/src/review-controls.ts` checks it on every attempt of all three review paths: reports, resolution photos and visit photos. A missing document means off. While review is off:
+**Automatic review switch.** Paid automatic review (OpenAI Decisions since 26 November; previously Vision and Gemini) runs only while the Firestore document `operations/automaticReview` says `enabled: true`. `functions/src/review-controls.ts` checks it on every attempt of all three review paths: reports, resolution photos and visit photos. A missing document means off. While review is off:
 
 - New and corrected reports are held with `reviewReason: 'staff-review'` and wait for an operator.
 - New resolution and visit photos stay private.
@@ -120,12 +120,21 @@ The pre-deployment production audit found high-severity advisories in the existi
 The `reviewReport` Firestore creation trigger claims a processing lease and runs the following sequence:
 
 1. Test identities and emulator test receipts stay private without reaching publication checks.
-2. Cloud Vision checks each image for faces, readable text and unsafe content. Text-bearing or uncertain images are excluded entirely.
-3. Gemini 3.1 Flash-Lite on the EU multi-region endpoint checks relevance and privacy, then proposes a short neutral resident-attributed summary. Embedded instructions in submissions are untrusted data. The parser rejects invalid output, unsafe indexes and contact details; publication also requires a model confidence of at least 0.95. This is a decision threshold, not a measured accuracy claim.
-4. Eligible text-only reports, or reports with at least one supplied photo that passes both checks get separate, metadata-stripped public derivatives, a canonical incident, a public projection and an audit record. Public coordinates are rounded to three decimal places. The original report and media stay private.
-5. Uncertain, irrelevant or privacy-sensitive reports stay private with an owner-visible reason. Provider failures retry up to five attempts, then stay private. A duplicate event does not create another incident.
+2. One call to the OpenAI Decisions API (`gpt-6-luna`, `POST /v1/decisions`) asks fixed questions and returns a probability for each:
+   - whether the text describes a public infrastructure or service problem (`relevant`);
+   - whether the description or landmark holds personal information (`personal`), or threats, accusations, disputes or emergencies (`harmful`);
+   - whether the landmark names a public place (`public_place`), and which of 18 standard problems it describes (`problem`);
+   - for each photo, attached to its own question at most 1024 px, whether it is publishable or shows people, readable text, private space, graphic content or nothing relevant.
+3. The report text travels only as JSON data, never inside a question, and the context tells the model to ignore instructions in it. Malformed answers fail closed. The thresholds are in `THRESHOLDS` in `functions/src/automatic-review.ts`; they are cautious starting points, not measured accuracy. Each review's probabilities are saved in `reviewAudit.scores` so they can be tuned.
+4. Publication needs `relevant` at least 0.9, `personal` and `harmful` below 0.1, and, when photos were supplied, at least one photo at least 0.9 likely to be publishable. The public text is standard wording, never the resident's own words: a problem name and the landmark when it names a public place, for example "A resident reported a burst pipe or water leak near Avondale shops." It falls back to the service name, and to "Area not specified".
+5. Eligible reports get separate, metadata-stripped public derivatives of the approved photos, a canonical incident, a public projection and an audit record. Public coordinates are rounded to three decimal places. The original report and media stay private.
+6. Uncertain, irrelevant or privacy-sensitive reports stay private with an owner-visible reason. Provider failures, including rate limits and spent credit, retry up to five attempts, then stay private. A duplicate event does not create another incident.
 
-Automatic review runs only while an administrator has switched it on (see P03 above); a report that arrives while it is off waits for an operator. When on, the pilot limits automatic review to 100 new reports per UTC day. Intake is limited to ten new reports per resident identity per day, and each function to two instances. Existing project billing covers metered Functions, Storage, Vision and model requests. Expiring quota collections use Firestore TTL; reports and receipts do not expire through these quota policies.
+The API key is the Secret Manager secret `OPENAI_API_KEY`, available only to `reviewReport` and `reviewResolution`. Requests go to `https://api.openai.com/v1/decisions` (processing in the United States). A project created with European data residency would use `https://eu.api.openai.com/v1/decisions` instead; change `DECISIONS_URL` and the privacy notice together. OpenAI keeps request logs for up to 30 days for abuse monitoring and does not train on API data.
+
+The backend role still holds the Vision and Vertex AI permissions from the previous provider. They are unused and can be removed from `firebase/iam/backend-review-role.yaml` in a later IAM change.
+
+Automatic review runs only while an administrator has switched it on (see P03 above); a report that arrives while it is off waits for an operator. When on, the pilot limits automatic review to 100 new reports per UTC day. Intake is limited to ten new reports per resident identity per day, and each function to two instances. OpenAI usage is billed separately from prepaid credit; Google billing covers Functions and Storage. Expiring quota collections use Firestore TTL; reports and receipts do not expire through these quota policies.
 
 Automated checks can make mistakes. Publication is not an inspection, fact verification or an authority acknowledgement. Responsible municipality/service assignment remains unconfirmed rather than being invented. Manual operations, duplicate merging, municipal handoffs and evidenced resolution updates are later workflow work.
 

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
-import { checkReport, REVIEW_MODEL, REVIEW_POLICY } from './automatic-review.ts';
+import { checkReport, REVIEW_MODEL, REVIEW_POLICY, type Decision } from './automatic-review.ts';
 import { reserveAutomaticReview } from './review-controls.ts';
 
 export async function reviewFieldEvidence(checkId: string, assess = checkReport) {
@@ -28,6 +28,7 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
   const data = item as FirebaseFirestore.DocumentData;
   let safeCount = 0;
   let retry = false;
+  let scores: Decision['scores'] | null = null;
   if (!data.capped) {
     try {
       if (
@@ -48,6 +49,7 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
         photos.push(bytes);
       }
       const decision = await assess(data, photos, 'resolution');
+      scores = decision.scores ?? null;
       if (decision.publish) {
         for (const [index, source] of decision.safePhotos.entries()) {
           const bytes = await sharp(photos[source])
@@ -100,6 +102,7 @@ export async function reviewFieldEvidence(checkId: string, assess = checkReport)
       decision: evidenceStatus,
       policy: REVIEW_POLICY,
       model: REVIEW_MODEL,
+      scores,
       reviewedAt: new Date().toISOString(),
     });
   });

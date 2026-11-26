@@ -204,11 +204,12 @@ export function MethodologyPage() {
         <p>
           Every report is reviewed before publication, by automatic text and photo checks when they
           are switched on, and otherwise by a Civic263 reviewer. Photos showing faces, readable
-          personal text or unsafe content stay private, and so do uncertain reports. Each issue says
-          whether it was published after automatic checks or after human review. Reviews can make
-          mistakes; publication is not independent verification, and it does not establish that a
-          field inspection occurred. Sending information to a responsible service and receiving its
-          acknowledgement are separate evidenced events.
+          personal text or unsafe content stay private, and so do uncertain reports. Automatic
+          checks publish a standard description of the problem, never the resident&rsquo;s own
+          words. Each issue says whether it was published after automatic checks or after human
+          review. Reviews can make mistakes; publication is not independent verification, and it
+          does not establish that a field inspection occurred. Sending information to a responsible
+          service and receiving its acknowledgement are separate evidenced events.
         </p>
         <h2>Freshness and resolution</h2>
         <p>

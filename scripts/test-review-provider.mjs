@@ -1,22 +1,16 @@
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
-import { initializeApp } from 'firebase-admin/app';
 const sharp = createRequire(new URL('../functions/package.json', import.meta.url))('sharp');
 
-// Operator token is read from stdin only and is never written or displayed.
+// Live contract check of the OpenAI Decisions provider. The API key is read from stdin only
+// (for example piped from Secret Manager) and is never written or displayed. Nothing is stored.
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
-const token = input.trim();
-assert(
-  token.length > 20 && token.length < 4096,
-  'Provide an ephemeral gcloud access token on stdin.',
-);
+const key = input.trim();
+assert(key.length > 20 && key.length < 512, 'Provide the OpenAI API key on stdin.');
 process.env.GCLOUD_PROJECT = 'civic263-df6ec';
-initializeApp({
-  projectId: 'civic263-df6ec',
-  credential: { getAccessToken: async () => ({ access_token: token, expires_in: 3600 }) },
-});
-const { checkReport } = await import('../functions/src/automatic-review.ts');
+process.env.OPENAI_API_KEY = key;
+const { checkReport, REVIEW_MODEL } = await import('../functions/src/automatic-review.ts');
 const photos = [];
 for (const background of ['red', 'green', 'blue'])
   photos.push(
@@ -24,24 +18,37 @@ for (const background of ['red', 'green', 'blue'])
       .jpeg()
       .toBuffer(),
   );
+const synthetic = {
+  categoryId: 'other',
+  description:
+    'ISOLATED BACKEND TEST ONLY: these are three synthetic solid colour patterns, not evidence of any municipal issue.',
+  landmark: 'Test only; no actual place.',
+};
 for (const [attachments, purpose] of [
   [photos, 'report'],
   [[], 'report'],
   [photos, 'resolution'],
 ]) {
-  const decision = await checkReport(
-    {
-      categoryId: 'other',
-      description:
-        'ISOLATED BACKEND TEST ONLY: these are three synthetic solid colour patterns, not evidence of any municipal issue.',
-      landmark: 'Test only; no actual place.',
-    },
-    attachments,
-    purpose,
-  );
+  const decision = await checkReport(synthetic, attachments, purpose);
   assert.equal(decision.publish, false);
   assert.equal(decision.safePhotos.length, 0);
   console.log(
-    `PASS: live ${purpose} review contract held synthetic test (${attachments.length} attachments) (${decision.reason}); no reports or photos were stored.`,
+    `PASS: live ${purpose} review held synthetic test (${attachments.length} photos, ${decision.reason}); scores ${JSON.stringify(decision.scores)}`,
   );
 }
+// A plausible text-only report shows how the thresholds behave on ordinary wording. It is
+// informational: thresholds are tuned from real reviews, not from this one example.
+const plausible = await checkReport(
+  {
+    categoryId: 'roads',
+    description:
+      'There is a deep pothole in the left lane that cars swerve to avoid. It has been there for three weeks and fills with water when it rains.',
+    landmark: 'Samora Machel Avenue',
+  },
+  [],
+  'report',
+);
+console.log(
+  `INFO: plausible text-only report ${plausible.publish ? `would publish as "${plausible.title}"` : `would be held (${plausible.reason})`}; scores ${JSON.stringify(plausible.scores)}`,
+);
+console.log(`Live ${REVIEW_MODEL} contract checks passed. No reports or photos were stored.`);

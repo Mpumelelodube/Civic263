@@ -124,6 +124,10 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - The public site; the privacy, terms and about pages render live.
   - The app wording waits for the app build. This item stays open until the support contact exists.
 
+- [ ] **P05:** cheaper automatic review. Agreed 26 November: replace Cloud Vision and Gemini with the OpenAI Decisions API (`gpt-6-luna`), about $0.0005 per report.
+  - Implemented in source: one call per review asking fixed questions about the text and each photo; standard public wording instead of a written summary, so residents' own words are never published; probabilities kept in the audit trail; privacy notice and runbook updated.
+  - Open: the owner creates the OpenAI key and stores it as `OPENAI_API_KEY` ([runbook](../docs/OPERATIONS_RUNBOOK.md#setting-up-the-openai-key)); then deploy the functions and website, run the live contract check, and switch review on.
+
 ## Later product backlog
 
 - [ ] **L01:** complete staff operations authentication/roles, duplicate merge, assignments, exports and evidenced handoffs.

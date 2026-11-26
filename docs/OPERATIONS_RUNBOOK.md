@@ -8,13 +8,31 @@ Status: decisions agreed on 26 November 2026, and applied to production the same
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Monthly budget        | $5, counting project `civic263-df6ec` only. The billing account also pays for other projects.                                                                                                    |
 | Over budget           | Alerts only. Billing administrators get emails at 50%, 90% and 100% of actual spend, and when the month's forecast passes 100%. Billing figures lag by hours, so a budget is not a spending cap. |
-| Paid automatic review | **Off.** Switched off to avoid AI costs. The code stays and can be switched back on with one command.                                                                                            |
+| Paid automatic review | **Off.** Switched off to avoid AI costs. On 26 November the provider was changed to the OpenAI Decisions API, the cheapest option; it is switched on once the OpenAI key is in place.            |
 | Recovery copies       | 7 days. Firestore point-in-time recovery plus a daily backup, each kept 7 days, and database delete protection. Storage already keeps deleted files for 7 days.                                  |
 | Unpublished reports   | Kept until the resident withdraws them or deletes their account. Revisit with the operating authority (P04).                                                                                     |
 
 ## Automatic review switch
 
-Automatic review sends each new report's photos to Cloud Vision and its text and photos to Gemini, then publishes it if both pass. It also screens resolution and community-visit photos. These are the only AI calls in Civic263, and the only usage-priced Google services besides address lookup.
+Automatic review sends each new report's text and photos to the OpenAI Decisions API in one call, then publishes standard wording and the approved photos if the answers pass (see [Automatic publication](FIREBASE_BACKEND.md#automatic-publication)). It also screens resolution and community-visit photos. These are the only AI calls in Civic263. Until 26 November the provider was Cloud Vision and Gemini.
+
+### Setting up the OpenAI key
+
+The owner does these steps; the key never passes through chat or the repository.
+
+1. At platform.openai.com, buy prepaid credit (for example $5) and leave auto-recharge off. Spent credit stops the calls; reports then wait for an operator.
+2. Create a project for Civic263 and set its monthly budget. If the organisation is offered European data residency, choose it when creating the project, then change `DECISIONS_URL` and the privacy notice before switching review on.
+3. Create a secret key in that project and store it in Secret Manager from your own terminal. The command asks for the key without showing it:
+   ```
+   npx firebase-tools@15.35.0 functions:secrets:set OPENAI_API_KEY --project civic263-df6ec
+   ```
+4. Deploy the functions, then run the live contract check. It reads the key from Secret Manager through a pipe and stores nothing:
+   ```
+   gcloud secrets versions access latest --secret OPENAI_API_KEY --project civic263-df6ec --account ADMIN_LOGIN | node --experimental-strip-types scripts/test-review-provider.mjs
+   ```
+5. Switch review on with `manage-operations.py`.
+
+To rotate the key, set the secret again and redeploy the functions; then revoke the old key in OpenAI.
 
 The switch is the Firestore document `operations/automaticReview`. Review runs only when it says `enabled: true`, so a missing or damaged document means **off**. Every attempt checks the switch, so turning it off also stops retries already in progress.
 
@@ -32,19 +50,19 @@ While review is off:
 
 Switching review back on does not reprocess reports that were waiting. Operators still decide those.
 
-When on, automatic review runs at most 100 times a day across reports, resolutions and visits. Each photo uses three Vision features, so a 3-photo report makes 9 Vision units plus one Gemini call. In the six weeks to 26 November, production made 6 Vision and 11 Gemini requests, all within Vision's free monthly allowance.
+When on, automatic review runs at most 100 times a day across reports, resolutions and visits. Each review is one Decisions call. OpenAI charges $0.10 per million input tokens for `gpt-6-luna` and nothing for output. A 3-photo report is roughly 5,000 tokens (OpenAI does not publish the image token count for this model, so this is an estimate), about $0.0005. Even 100 reviews every day would be about $1.50 a month, and European processing would add 10%. For comparison, in the six weeks to 26 November production made 11 review calls in all.
 
 ## What costs money
 
-| Service                          | Used by                                           | Limits in place                                                                                        |
-| -------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Cloud Vision, Gemini (Vertex AI) | Automatic review                                  | Switched off. When on, 100 reviews a day.                                                              |
-| Google Maps Places and Geocoding | Address search in the app (`lookupPlace`)         | Per-identity daily quota (`placeLookupQuotas`). Billed per request beyond Google's monthly free usage. |
-| Cloud Functions (Cloud Run)      | Every command and the public API                  | At most 2 instances per function, none kept warm. Public pages are cached for 30 seconds.              |
-| Firestore, Storage, Hosting      | Records, photos, web pages                        | Pilot volumes are megabytes. Daily quota collections expire through TTL.                               |
-| Cloud Monitoring                 | Two alert conditions and one uptime check         | About $0.10 per alert condition a month; uptime checks are within the free allowance.                  |
-| Firestore recovery               | Point-in-time recovery and daily backups          | Charged by stored size, currently megabytes.                                                           |
-| Artifact Registry                | Images behind deployed functions (222 MB, 26 Nov) | Cleanup rule: delete after 7 days, always keeping the 2 latest of each.                                |
+| Service                             | Used by                                           | Limits in place                                                                                        |
+| ----------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| OpenAI Decisions (billed by OpenAI) | Automatic review                                  | Switched off. When on, 100 reviews a day, and prepaid credit with auto-recharge off.                   |
+| Google Maps Places and Geocoding    | Address search in the app (`lookupPlace`)         | Per-identity daily quota (`placeLookupQuotas`). Billed per request beyond Google's monthly free usage. |
+| Cloud Functions (Cloud Run)         | Every command and the public API                  | At most 2 instances per function, none kept warm. Public pages are cached for 30 seconds.              |
+| Firestore, Storage, Hosting         | Records, photos, web pages                        | Pilot volumes are megabytes. Daily quota collections expire through TTL.                               |
+| Cloud Monitoring                    | Two alert conditions and one uptime check         | About $0.10 per alert condition a month; uptime checks are within the free allowance.                  |
+| Firestore recovery                  | Point-in-time recovery and daily backups          | Charged by stored size, currently megabytes.                                                           |
+| Artifact Registry                   | Images behind deployed functions (222 MB, 26 Nov) | Cleanup rule: delete after 7 days, always keeping the 2 latest of each.                                |
 
 ## Monitoring
 

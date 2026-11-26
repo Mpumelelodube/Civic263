@@ -6,7 +6,7 @@ import { receivePlaceLookup } from './place-lookup.ts';
 import { listResidentReports, readResidentReport } from './report-access.ts';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { reviewSubmittedReport } from './automatic-review.ts';
+import { openAiKey, reviewSubmittedReport } from './automatic-review.ts';
 import { servePublicApi } from './public-api.ts';
 import { submitFieldCheck } from './field-checks.ts';
 import { communityCommand } from './community.ts';
@@ -41,6 +41,7 @@ export const reviewReport = onDocumentCreated(
     memory: '1GiB',
     timeoutSeconds: 240,
     retry: true,
+    secrets: [openAiKey],
   },
   async (event) => reviewSubmittedReport(event.params.reportId),
 );
@@ -52,6 +53,7 @@ export const reviewResolution = onDocumentCreated(
     memory: '1GiB',
     timeoutSeconds: 240,
     retry: true,
+    secrets: [openAiKey],
   },
   async (event) => {
     if (event.data?.data().event === 'resident-resolved')

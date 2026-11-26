@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
-import { checkReport, REVIEW_MODEL, REVIEW_POLICY } from './automatic-review.ts';
+import { checkReport, REVIEW_MODEL, REVIEW_POLICY, type Decision } from './automatic-review.ts';
 import { reserveAutomaticReview } from './review-controls.ts';
 import { readResolution } from '../../packages/domain/src/report-resolution.ts';
 import { toPublicIncident } from '../../packages/domain/src/publication.ts';
@@ -54,6 +54,7 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
   const report = item as Record<string, unknown> & { attempts: number; capped: boolean };
   let safeCount = 0;
   let retry = false;
+  let scores: Decision['scores'] | null = null;
   if (!report.capped) {
     try {
       const evidence = report.resolutionEvidence as { rawMediaPaths: string[] };
@@ -67,6 +68,7 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
         photos.push(bytes);
       }
       const decision = await assess(report, photos, 'resolution');
+      scores = decision.scores ?? null;
       if (decision.publish) {
         for (const [index, source] of decision.safePhotos.entries()) {
           const bytes = await sharp(photos[source])
@@ -145,6 +147,7 @@ export async function reviewResolutionEvidence(reportId: string, assess = checkR
       decision: resolution.evidenceStatus,
       policy: REVIEW_POLICY,
       model: REVIEW_MODEL,
+      scores,
       reviewedAt: new Date().toISOString(),
     });
   });

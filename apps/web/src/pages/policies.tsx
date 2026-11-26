@@ -126,8 +126,10 @@ export function PrivacyPage() {
           </li>
           <li>Google Maps Platform handles address search.</li>
           <li>
-            Google Cloud Vision and Gemini check text and photos when automatic review is switched
-            on. It is currently switched off, and a person reviews each report instead.
+            OpenAI checks a report&rsquo;s text and photos when automatic review is switched on.
+            They are processed in the United States. OpenAI does not use them to train its models,
+            and keeps them for up to 30 days to detect abuse of its service. While automatic review
+            is switched off, a person reviews each report instead.
           </li>
           <li>Apple and Google deliver notifications to your device if you allow them.</li>
         </ul>

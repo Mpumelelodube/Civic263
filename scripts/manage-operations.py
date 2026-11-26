@@ -1,4 +1,4 @@
-"""Switch paid automatic review (Cloud Vision and Gemini) on or off in the live project.
+"""Switch paid automatic review (OpenAI Decisions) on or off in the live project.
 
 While it is off, new reports wait privately in the operators' Held queue, and new resolution and
 visit photos stay private. Nothing is lost: an operator can still publish any held report.

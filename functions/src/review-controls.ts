@@ -1,6 +1,6 @@
 import { getFirestore, type Transaction } from 'firebase-admin/firestore';
 
-/** Paid automatic reviews (Cloud Vision and Gemini) shared by reports, resolutions and visits. */
+/** Paid automatic reviews (OpenAI Decisions) shared by reports, resolutions and visits. */
 export const DAILY_REVIEW_LIMIT = 100;
 
 /**
