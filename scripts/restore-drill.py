@@ -35,20 +35,43 @@ parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.R
 parser.add_argument('--account', required=True, help='Your existing gcloud administrator login')
 parser.add_argument('--from-backup', action='store_true', help='Restore the latest daily backup instead')
 parser.add_argument('--keep', action='store_true', help='Keep the drill database (delete it yourself)')
+parser.add_argument('--resume', metavar='DRILL_ID', help='Check and delete an existing drill-... database instead')
 args = parser.parse_args()
+if args.resume and not args.resume.startswith('drill-'):
+    parser.error('--resume only accepts a drill-... database')
 
-token = subprocess.check_output([GCLOUD, 'auth', 'print-access-token', '--account=' + args.account, '--quiet'], text=True).strip()
-headers = {'Authorization': 'Bearer ' + token, 'X-Goog-User-Project': PROJECT, 'Content-Type': 'application/json'}
+headers = {'X-Goog-User-Project': PROJECT, 'Content-Type': 'application/json'}
+
+
+def authorize():
+    # gcloud hands out its cached token, which may expire part-way through a long drill.
+    token = subprocess.check_output([GCLOUD, 'auth', 'print-access-token', '--account=' + args.account, '--quiet'], text=True).strip()
+    headers['Authorization'] = 'Bearer ' + token
+
+
+authorize()
 
 
 def request(url, data=None, method=None):
     body = json.dumps(data).encode() if data is not None else None
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, data=body, method=method, headers=headers), timeout=120) as response:
-            return json.loads(response.read() or b'{}')
-    except urllib.error.HTTPError as error:
-        message = json.loads(error.read() or b'{}').get('error', {}).get('message', 'unknown error')
-        raise SystemExit(f'{method or "GET"} {url.split("?")[0]} failed ({error.code}): {message}') from None
+    # A new copy keeps refusing requests for a while after its operation reports done.
+    deadline = time.monotonic() + 1800
+    refreshed = False
+    while True:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, data=body, method=method, headers=headers), timeout=120) as response:
+                return json.loads(response.read() or b'{}')
+        except urllib.error.HTTPError as error:
+            message = json.loads(error.read() or b'{}').get('error', {}).get('message', 'unknown error')
+            if error.code == 401 and not refreshed:
+                refreshed = True
+                time.sleep(2)
+                authorize()
+                continue
+            if error.code == 400 and 'in the middle of' in message and time.monotonic() < deadline:
+                time.sleep(20)
+                continue
+            raise SystemExit(f'{method or "GET"} {url.split("?")[0]} failed ({error.code}): {message}') from None
 
 
 def wait(operation):
@@ -101,9 +124,12 @@ def integer(value, default=0):
 
 
 started = dt.datetime.now(dt.timezone.utc)
-drill = 'drill-' + started.strftime('%Y%m%d-%H%M')
+drill = args.resume or 'drill-' + started.strftime('%Y%m%d-%H%M')
 assert drill.startswith('drill-') and drill != '(default)'
-if args.from_backup:
+if args.resume:
+    snapshot = 'unknown (resumed)'
+    print(f'Checking the existing {drill}...')
+elif args.from_backup:
     backups = [item for item in request(f'{ADMIN}/locations/{LOCATION}/backups').get('backups', [])
                if item.get('database', '').endswith('/databases/(default)') and item.get('state') == 'READY']
     if not backups:
@@ -155,11 +181,20 @@ try:
     if missing_derivatives:
         problems.append(f'{missing_derivatives} published photo(s) are missing from Storage')
     # Originals erased since the snapshot are expected to be missing; they are reported, not failed.
+except (SystemExit, Exception) as error:
+    # Report why the check stopped before cleanup, so a cleanup error cannot hide it.
+    problems.append(f'the check stopped: {error}')
+    print('CHECK STOPPED: ' + str(error))
 finally:
     if args.keep:
         print(f'Kept {drill}. It holds private data: delete it when done with '
               f'gcloud firestore databases delete --database={drill} --project={PROJECT}')
     else:
+        # A copy inherits the live database's delete protection; lift it on the drill copy only.
+        assert drill.startswith('drill-')
+        if request(f'{ADMIN}/databases/{drill}').get('deleteProtectionState') == 'DELETE_PROTECTION_ENABLED':
+            wait(request(f'{ADMIN}/databases/{drill}?updateMask=deleteProtectionState',
+                         {'deleteProtectionState': 'DELETE_PROTECTION_DISABLED'}, 'PATCH'))
         wait(request(f'{ADMIN}/databases/{drill}', method='DELETE'))
         print(f'Deleted {drill}.')
 

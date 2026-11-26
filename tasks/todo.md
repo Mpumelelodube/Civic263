@@ -78,7 +78,7 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - Multi-factor sign-in for operators (needs Identity Platform).
   - The P04 support contact, and confirmation of the rules with the operating authority.
 
-- [ ] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures. Rules agreed 26 November in the [operations runbook](../docs/OPERATIONS_RUNBOOK.md):
+- [x] **P03:** monitoring, budget/quotas, backup/restore and broader safe retention/cleanup procedures. Rules agreed 26 November in the [operations runbook](../docs/OPERATIONS_RUNBOOK.md):
   - A $5 monthly budget for this project only, alerts only.
   - Paid automatic review (Vision and Gemini) switched off but kept; reports wait for an operator meanwhile.
   - A 7-day recovery window (point-in-time recovery and daily backups).
@@ -89,10 +89,16 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - Unit tests (75) and the publication, community, lifecycle and moderation emulator suites.
   - `setup-operations.py` (budget, alerts, uptime check, recovery, image cleanup), `restore-drill.py`, and `cleanup-orphans.py`, which replaces the visit-only tool. Its live dry run recognised all 34 objects and found none eligible.
 
-  Still open:
-  - Production deploy and apply. The deploy was stopped by the permission check pending the administrator's approval, so automatic review is still on in production until Functions are deployed.
-  - The first restore drill.
-  - App build for the new resident wording.
+  Applied 26 November with the user's approval:
+  - Functions and the ops site deployed, and automatic review recorded as off.
+  - All ten settings created: budget, alert channel, uptime check, error metric, two alerts, point-in-time recovery, delete protection, daily backup and image cleanup.
+  - The live backend check passed (13 of 13).
+  - The first restore drill passed: all 16 collections matched live, no photos missing, and the copy was deleted.
+
+  Ongoing and open:
+  - A weekly orphan sweep and a monthly drill, per the runbook.
+  - No alert email has been observed yet.
+  - The app build for the new resident wording.
 
 - [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.
 

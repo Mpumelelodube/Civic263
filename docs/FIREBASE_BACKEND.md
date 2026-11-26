@@ -89,7 +89,7 @@ Rules, procedures and the drill log are in [the operations runbook](OPERATIONS_R
 - New and corrected reports are held with `reviewReason: 'staff-review'` and wait for an operator.
 - New resolution and visit photos stay private.
 
-`scripts/manage-operations.py` switches review on or off. The user switched it off on 26 November 2026 to avoid AI costs; it takes effect with the next Functions deployment.
+`scripts/manage-operations.py` switches review on or off. The user switched it off on 26 November 2026 to avoid AI costs. The Functions deployment that day brought in the switch, and it was recorded as off at 09:10 UTC.
 
 Operators keep reports private with a `staffDecision` on the report, which the resident sees. The owner DTO, the Held queue and `staff-profile` expose the new state.
 
@@ -100,6 +100,14 @@ Operators keep reports private with a `staffDecision` on the report, which the r
 - `scripts/cleanup-orphans.py` sweeps unreferenced photos.
 
 `npm run test:publication` and `npm run test:moderation` cover the switch: off by default, stopping retries, never calling the provider, and operator decisions.
+
+Applied 26 November 2026 with the user's approval:
+
+- Functions and the ops site deployed.
+- The switch recorded as off.
+- All ten operational settings created; a rerun of the setup script reports everything in place.
+- The live backend check passed (13 of 13).
+- The first restore drill passed, and its copy was deleted.
 
 ## Backend dependency maintenance - 12 November 2026
 

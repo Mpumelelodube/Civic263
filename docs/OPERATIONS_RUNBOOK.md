@@ -1,6 +1,6 @@
 # Spec and runbook: costs, monitoring, recovery and retention (P03)
 
-Status: decisions agreed on 26 November 2026, and tools and code built and tested against the demo emulators. Applying them to production needs the administrator's approval; see [Applying this](#applying-this). These are pilot operating rules, not legal conclusions.
+Status: decisions agreed on 26 November 2026, and applied to production the same day with the administrator's approval (see [Applying this](#applying-this)). Automatic review has been off since then. These are pilot operating rules, not legal conclusions.
 
 ## Decisions
 
@@ -79,7 +79,7 @@ python scripts/restore-drill.py --account ADMIN_LOGIN               # from point
 python scripts/restore-drill.py --account ADMIN_LOGIN --from-backup # from the latest daily backup
 ```
 
-The drill copies the live database into a temporary `drill-YYYYMMDD-HHMM` database, then checks it. It compares document counts with live, confirms every public record has its report and incident, and confirms every published photo the copy names exists in Storage. It then deletes the copy, because the copy holds private data. Record the result and its duration under [Drill log](#drill-log).
+The drill copies the live database into a temporary `drill-YYYYMMDD-HHMM` database, then checks it. It compares document counts with live, confirms every public record has its report and incident, and confirms every published photo the copy names exists in Storage. It then deletes the copy, because the copy holds private data. Cloning took about 11 minutes on 26 November, so allow 20 minutes. If a drill is interrupted, `--resume drill-YYYYMMDD-HHMM` checks and deletes that copy. Record the result and its duration under [Drill log](#drill-log).
 
 ## Retention
 
@@ -118,6 +118,16 @@ The first dry run, on 26 November 2026, recognised all 34 stored objects (32 rep
 
 ## Applying this
 
+Done on 26 November 2026, in this order:
+
+- All nine functions and the ops site were deployed.
+- The switch was recorded as off at 09:10 UTC.
+- `setup-operations.py --apply` made all ten changes; a rerun reports everything in place. Its first run stopped at the backend-error alert, because a new log-based metric takes a few minutes to become usable; the rerun a minute later completed.
+- The live backend check passed all 13 checks.
+- The first restore drill passed (see [Drill log](#drill-log)).
+
+To set up again from scratch:
+
 1. Deploy Functions. This brings in the switch. Automatic review is off from that moment, because no switch document exists yet.
 2. Deploy the ops Hosting site, which shows the review state and the Held queue deadlines.
 3. `python scripts/manage-operations.py review off --account ADMIN_LOGIN --note "Keep AI costs down"` records the decision explicitly.
@@ -127,6 +137,14 @@ The first dry run, on 26 November 2026, recognised all 34 stored objects (32 rep
 
 ## Drill log
 
-| Date | Source | Duration | Result |
-| ---- | ------ | -------- | ------ |
-|      |        |          |        |
+| Date        | Source                                     | Duration                                                 | Result                                                                                                                                                                    |
+| ----------- | ------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 26 Nov 2026 | Point-in-time recovery, snapshot 09:28 UTC | Clone 676 s, then about 6 minutes of checks and deletion | Passed. All 16 checked collections matched live (18 reports, 10 events, 6 deletion markers and others). No original or published photo was missing. The copy was deleted. |
+
+The first attempt that day exposed three gaps in the script, now fixed. The final run above used the fixed script.
+
+- A new copy refuses requests for a while after its clone operation reports done; the script now waits for it.
+- gcloud handed out a cached token that expired mid-drill; the script now refreshes it.
+- A copy inherits the live database's delete protection; the script now lifts it on the `drill-` copy before deleting.
+
+Neither copy outlived the session.
