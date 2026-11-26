@@ -100,7 +100,26 @@ The last Note9 test/service was active at the 13 November handoff. No successful
   - No alert email has been observed yet.
   - The app build for the new resident wording.
 
-- [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision.
+- [ ] **P04:** pilot boundaries, service contacts, emergency guidance, privacy/reuse terms and an explicit rollout decision. Rules agreed 26 November in the [pilot scope spec](../docs/PILOT_SCOPE.md):
+  - A pilot across all of Zimbabwe, run independently by Machdubit Tech Solutions.
+  - Public text data under CC BY 4.0, with photos excluded.
+  - The support mailbox is pending (the owner is buying a domain).
+
+  Implemented in source:
+  - The pilot-area check (server and app).
+  - Emergency numbers with their source on danger-prone services.
+  - Privacy notice and terms pages, licence columns in the CSV, and an About section in the app.
+  - `npm run check:launch`.
+
+  Rollout decision: **not ready for public launch.** Open gates:
+  - the support mailbox;
+  - local confirmation of the emergency numbers;
+  - the POTRAZ data controller licence and data protection officer question;
+  - legal review of the notice and terms;
+  - the app build and device acceptance;
+  - operator MFA.
+
+  Deployment of the site and backend awaits approval.
 
 ## Later product backlog
 

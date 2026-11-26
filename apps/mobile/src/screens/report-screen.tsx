@@ -15,8 +15,12 @@ import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import {
   CATEGORIES,
+  OPERATOR,
   PHOTO_LIMITS,
+  PILOT_AREA,
   categoryLabel,
+  isDangerCategory,
+  isInPilotArea,
   type CategoryId,
   type DraftPhoto,
   type ReportDraft,
@@ -34,6 +38,7 @@ import { ReportPhotos } from '@/components/report-photos';
 import { ReportLocationField } from '@/components/report-location';
 import { motion, radius, spacing, useTheme } from '@/theme';
 import { CategoryGrid } from '@/components/category-grid';
+import { EmergencyGuidance } from '@/components/emergency-guidance';
 import { reportReadiness } from '@/services/report-readiness';
 import { useLayout } from '@/hooks/use-layout';
 
@@ -171,6 +176,7 @@ export function ReportScreen() {
     description,
     landmark,
     hasPin: !!location,
+    pinInPilotArea: location ? isInPilotArea(location.latitude, location.longitude) : undefined,
     photoCount: photos.length,
   });
   // Tablets and foldables: the form beside a sticky readiness column with the actions.
@@ -261,6 +267,7 @@ export function ReportScreen() {
             <AppIcon name="chevron" size={20} color={theme.muted} />
           </Pressable>
         )}
+        {isDangerCategory(categoryId) && <EmergencyGuidance />}
       </View>
       <View style={{ gap: spacing.lg }}>
         <AppText variant="eyebrow" style={{ color: theme.muted }}>
@@ -318,7 +325,7 @@ export function ReportScreen() {
       )}
       <AppText variant="caption" style={{ color: theme.muted }}>
         {intakeEnabled
-          ? 'Sending saves a device copy first. Automatic checks may publish a cleaned summary, approved photos and an approximate map position. Your reporting identity and original uploads stay private. A receipt confirms platform intake, not municipal acknowledgement.'
+          ? `Sending saves a device copy first. Civic263 is a pilot across ${PILOT_AREA}, run independently by ${OPERATOR.name}. After review, it may publish a cleaned summary, approved photos and an approximate map position. Your reporting identity and original uploads stay private. A receipt confirms platform intake, not municipal acknowledgement.`
           : 'Server submission is not enabled for this build. Save your details and compressed photos on this device for now.'}{' '}
         Clearing app data can remove drafts and your device reporting identity.
       </AppText>

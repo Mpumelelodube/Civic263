@@ -1,6 +1,6 @@
 import { isCategoryId, type CategoryId } from './categories.ts';
 import { validateDraft } from './validation.ts';
-import { parseReportLocation, type ReportLocation } from './locations.ts';
+import { parsePilotReportLocation, type ReportLocation } from './locations.ts';
 import { PHOTO_LIMITS } from './report-submission.ts';
 import type { ModerationStatus, WorkflowStatus } from './models.ts';
 
@@ -125,7 +125,7 @@ export function parseReportCorrection(value: unknown): ReportCorrectionInput {
     categoryId: data.categoryId,
     description: data.description.trim(),
     landmark: data.landmark.trim(),
-    location: parseReportLocation(data.location),
+    location: parsePilotReportLocation(data.location),
     keepPhotos: [...(keep as number[])].sort((a, b) => a - b),
   };
 }

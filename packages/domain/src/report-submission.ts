@@ -1,6 +1,6 @@
 import { isCategoryId, type CategoryId } from './categories.ts';
 import { validateDraft } from './validation.ts';
-import { parseReportLocation, type ReportLocation } from './locations.ts';
+import { parsePilotReportLocation, type ReportLocation } from './locations.ts';
 
 export const PHOTO_LIMITS = {
   maximum: 3,
@@ -75,7 +75,7 @@ export function parseReportSubmission(value: unknown): ReportSubmissionInput {
     description: value.description.trim(),
     landmark: value.landmark.trim(),
     photos,
-    location: parseReportLocation(value.location),
+    location: parsePilotReportLocation(value.location),
   };
 }
 

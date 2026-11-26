@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIES,
+  DATA_LICENCE,
   HANDOFF_LABELS,
   workflowLabel,
   categoryLabel,
@@ -181,8 +182,8 @@ export function ExplorePage() {
         <section className="panel content-panel">
           <h2>What this record covers</h2>
           <p className="muted small">
-            Published resident observations from the loaded register. Text and photos pass automatic
-            privacy and relevance checks; service responsibility remains unassigned until confirmed.
+            Published resident observations from the loaded register. Text and photos are reviewed
+            for privacy and relevance; service responsibility remains unassigned until confirmed.
           </p>
           <Link className="text-link" to="/methodology">
             Understand the evidence
@@ -204,6 +205,12 @@ export function ExplorePage() {
           >
             Download this view as CSV
           </button>
+          <p className="muted small">
+            Text data under {DATA_LICENCE.name}; photos are not licensed.{' '}
+            <Link className="text-link" to="/terms">
+              Reuse terms
+            </Link>
+          </p>
         </section>
       </div>
     </>

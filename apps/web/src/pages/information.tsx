@@ -1,6 +1,17 @@
-import { isOpenIncident, categoryLabel, workflowLabel } from '@civic263/domain';
+import { Link } from 'react-router-dom';
+import {
+  DATA_LICENCE,
+  EMERGENCY_GUIDANCE,
+  NOT_AN_EMERGENCY_SERVICE,
+  OPERATOR,
+  PILOT_AREA,
+  isOpenIncident,
+  categoryLabel,
+  workflowLabel,
+} from '@civic263/domain';
 import { usePublicRegister } from '../lib/public-register';
 import { downloadPublicCsv } from '../lib/download-csv';
+import { SupportContact } from './policies';
 
 export function DataPage() {
   const { incidents, asOf, nextCursor } = usePublicRegister();
@@ -59,6 +70,68 @@ export function DataPage() {
           describe participation in Civic263; they are not a complete survey of faults or council
           performance. Photos are not included in CSV exports.
         </p>
+      </section>
+      <section className="panel content-panel">
+        <h2>Reuse terms</h2>
+        <p>
+          The published text data is licensed under{' '}
+          <a
+            className="text-link"
+            href={DATA_LICENCE.url}
+            rel="noreferrer noopener"
+            target="_blank"
+          >
+            {DATA_LICENCE.name}
+          </a>
+          . Credit it as “{DATA_LICENCE.attribution}”. Photos are not licensed for reuse. Every
+          download repeats the licence and credit in its last two columns.{' '}
+          <Link className="text-link" to="/terms">
+            Full reuse terms
+          </Link>
+        </p>
+        <h2>Fields</h2>
+        <div className="table-wrap">
+          <table>
+            <tbody>
+              <tr>
+                <th scope="row">reference</th>
+                <td>Stable public reference; the issue page is /issues/reference.</td>
+              </tr>
+              <tr>
+                <th scope="row">title, area</th>
+                <td>Neutral text written during review, and a general area.</td>
+              </tr>
+              <tr>
+                <th scope="row">category</th>
+                <td>The service the resident chose.</td>
+              </tr>
+              <tr>
+                <th scope="row">workflow, handoff</th>
+                <td>Progress, and whether a responsible service was notified (evidenced only).</td>
+              </tr>
+              <tr>
+                <th scope="row">first_accepted_at, last_evidence_at</th>
+                <td>
+                  When the issue was first published, and its latest approved evidence (ISO 8601).
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">resolution_source, resolved_at</th>
+                <td>
+                  Who reported a resolution (a resident observation, not an inspection) and when.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">community_status, fix_reported_at, community_reviewed_at</th>
+                <td>Residents' on-site fix reports and their independent review.</td>
+              </tr>
+              <tr>
+                <th scope="row">as_of</th>
+                <td>When this snapshot was loaded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </>
   );
@@ -129,12 +202,13 @@ export function MethodologyPage() {
         </p>
         <h2>Review and acknowledgement</h2>
         <p>
-          Automated text and photo checks determine whether an observation is suitable for
-          publication. Photos with detected faces, readable text or unsafe content stay private.
-          Uncertain reports also stay private. Automated checks can make mistakes; publication is
-          not independent verification. It does not establish that a field inspection occurred.
-          Sending information to a responsible service and receiving its acknowledgement are
-          separate evidenced events.
+          Every report is reviewed before publication, by automatic text and photo checks when they
+          are switched on, and otherwise by a Civic263 reviewer. Photos showing faces, readable
+          personal text or unsafe content stay private, and so do uncertain reports. Each issue says
+          whether it was published after automatic checks or after human review. Reviews can make
+          mistakes; publication is not independent verification, and it does not establish that a
+          field inspection occurred. Sending information to a responsible service and receiving its
+          acknowledgement are separate evidenced events.
         </p>
         <h2>Freshness and resolution</h2>
         <p>
@@ -153,10 +227,29 @@ export function MethodologyPage() {
           counts cannot be treated as a complete survey of faults or a council league table. Only
           approved, privacy-safe fields may be reused publicly.
         </p>
-        <h2>Immediate danger</h2>
-        <p>
-          Submitting an issue does not dispatch emergency services. Verified local emergency
-          guidance must be configured for the pilot before urgent categories go live.
+        <h2 id="emergency">Immediate danger</h2>
+        <p>{NOT_AN_EMERGENCY_SERVICE}</p>
+        <ul>
+          {EMERGENCY_GUIDANCE.numbers.map((item) => (
+            <li key={item.number}>
+              {item.label}:{' '}
+              <a className="text-link" href={`tel:${item.number.replaceAll(' ', '')}`}>
+                {item.number}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="small muted">
+          Numbers as published by{' '}
+          <a
+            className="text-link"
+            href={EMERGENCY_GUIDANCE.sourceUrl}
+            rel="noreferrer noopener"
+            target="_blank"
+          >
+            {EMERGENCY_GUIDANCE.source}
+          </a>
+          , checked {new Date(EMERGENCY_GUIDANCE.checkedOn).toLocaleDateString()}.
         </p>
       </article>
     </>
@@ -172,17 +265,34 @@ export function AboutPage() {
       <article className="panel content-panel">
         <h2>Report it. Track what happens.</h2>
         <p>
-          Civic263 is being developed as a public municipal issue register for Zimbabwe, supported
-          by an Expo resident app and a private operations dashboard.
+          Civic263 is a public register of reported municipal issues, in a pilot across {PILOT_AREA}
+          . It is run independently by {OPERATOR.name}, with a resident app and a private review
+          console.
         </p>
         <p>
-          The resident app submits reports and compressed photos privately. Automatic publication
-          checks create a separate public record for eligible observations. Handoffs to responsible
-          services are recorded separately when they occur.
+          The resident app sends reports and compressed photos privately. After review, eligible
+          observations get a separate public record. Handoffs to responsible services are recorded
+          separately when they occur.
         </p>
         <p>
-          The platform is independent unless a formal municipal partnership is established. No
-          authority partnership, monitoring hours or repair service is represented by this platform.
+          No council or service provider runs or endorses Civic263, and none receives reports from
+          it automatically. No monitoring hours or repair service are offered.{' '}
+          <Link className="text-link" to="/methodology#emergency">
+            In an emergency, call for help first.
+          </Link>
+        </p>
+        <h2>Contact</h2>
+        <p>
+          Support and privacy requests: <SupportContact />
+        </p>
+        <p>
+          <Link className="text-link" to="/privacy">
+            Privacy notice
+          </Link>{' '}
+          ·{' '}
+          <Link className="text-link" to="/terms">
+            Terms and data reuse
+          </Link>
         </p>
       </article>
     </>

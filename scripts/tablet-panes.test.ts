@@ -58,6 +58,18 @@ test('the composer checklist mirrors the draft rules', () => {
     hasPin: true,
   });
   assert.equal(ready.ready, true, 'photos are optional');
+  const abroad = reportReadiness({
+    ...base,
+    description: 'A deep pothole',
+    landmark: 'Main St',
+    hasPin: true,
+    pinInPilotArea: false,
+  });
+  assert.equal(abroad.ready, false, 'a pin outside the pilot area cannot be sent');
+  assert.equal(
+    abroad.items.find((item) => item.key === 'place')?.detail,
+    'Move the pin into Zimbabwe',
+  );
   const tooLong = reportReadiness({
     ...base,
     description: 'x'.repeat(1001),

@@ -1,5 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, View } from 'react-native';
+import {
+  OPERATOR,
+  PILOT_AREA,
+  PUBLIC_SITE,
+  SUPPORT_EMAIL,
+  SUPPORT_PENDING_TEXT,
+} from '@civic263/domain';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -346,6 +353,28 @@ export function AccountScreen() {
         Submitted reports follow your saved account. Unsent drafts and camera evidence remain on
         their original device.
       </AppText>
+      <View style={{ gap: 12, paddingTop: 12 }}>
+        <AppText variant="heading">About Civic263</AppText>
+        <AppText style={{ color: theme.muted }}>
+          A pilot across {PILOT_AREA}, run independently by {OPERATOR.name}. It is not run by a
+          council or service provider, and sending a report does not notify one.
+        </AppText>
+        <AppText selectable style={{ color: theme.muted }}>
+          {SUPPORT_EMAIL ? `Support and privacy requests: ${SUPPORT_EMAIL}` : SUPPORT_PENDING_TEXT}
+        </AppText>
+        <ActionButton
+          label="Privacy notice"
+          icon="lock"
+          variant="secondary"
+          onPress={() => void Linking.openURL(`${PUBLIC_SITE}/privacy`)}
+        />
+        <ActionButton
+          label="Terms and data reuse"
+          icon="reviews"
+          variant="secondary"
+          onPress={() => void Linking.openURL(`${PUBLIC_SITE}/terms`)}
+        />
+      </View>
       {account && mode !== 'reset' && (
         <View style={{ gap: 12, paddingTop: 12 }}>
           <AppText variant="heading">Delete account and data</AppText>

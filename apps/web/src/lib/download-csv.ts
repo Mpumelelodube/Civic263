@@ -1,4 +1,4 @@
-import { csvCell, type PublicIncident } from '@civic263/domain';
+import { DATA_LICENCE, csvCell, type PublicIncident } from '@civic263/domain';
 
 export function downloadPublicCsv(incidents: PublicIncident[], asOf: string): void {
   const columns = [
@@ -17,6 +17,9 @@ export function downloadPublicCsv(incidents: PublicIncident[], asOf: string): vo
     'fix_reported_at',
     'community_reviewed_at',
     'as_of',
+    // A downloaded file keeps its reuse terms even when separated from the site.
+    'licence',
+    'attribution',
   ];
   const rows = incidents.map((item) => [
     'Civic263 public resident observations',
@@ -34,6 +37,8 @@ export function downloadPublicCsv(incidents: PublicIncident[], asOf: string): vo
     item.communityResolution?.reportedFixedAt ?? '',
     item.communityResolution?.reviewedAt ?? '',
     asOf,
+    `${DATA_LICENCE.id} ${DATA_LICENCE.url}`,
+    DATA_LICENCE.attribution,
   ]);
   const csv = [columns, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));

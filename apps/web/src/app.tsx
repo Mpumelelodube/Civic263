@@ -3,7 +3,9 @@ import { Brand, Notice } from '@civic263/web-ui';
 import { ExplorePage } from './pages/explore';
 import { IncidentDetailPage } from './pages/incident-detail';
 import { AboutPage, AreasPage, DataPage, MethodologyPage } from './pages/information';
+import { PrivacyPage, TermsPage } from './pages/policies';
 import { RegisterState } from './lib/public-register';
+import { OPERATOR, PILOT_AREA } from '@civic263/domain';
 
 export function App() {
   return (
@@ -27,9 +29,14 @@ export function App() {
             <NavLink to="/data">Public data</NavLink>
             <NavLink to="/methodology">How evidence works</NavLink>
             <NavLink to="/about">About Civic263</NavLink>
+            <NavLink to="/privacy">Privacy notice</NavLink>
+            <NavLink to="/terms">Terms and data reuse</NavLink>
           </nav>
           <div className="sidebar-note">
-            <p>Independent community reporting.</p>
+            <p>
+              Independent pilot across {PILOT_AREA}, run by {OPERATOR.name}. Not an emergency
+              service.
+            </p>
             <p>
               Handoffs and authority acknowledgements are recorded separately from resident
               observations.
@@ -38,8 +45,9 @@ export function App() {
         </aside>
         <main id="main">
           <Notice>
-            <strong>Resident observations.</strong> Reports and public photos pass automatic
-            publication checks. Publication does not confirm an inspection or municipal response.
+            <strong>Resident observations.</strong> Reports and public photos are reviewed for
+            privacy before publication. Publication does not confirm an inspection or municipal
+            response.
           </Notice>
           <RegisterState />
           <Routes>
@@ -48,6 +56,8 @@ export function App() {
             <Route path="/data" element={<DataPage />} />
             <Route path="/methodology" element={<MethodologyPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/issues/:reference" element={<IncidentDetailPage />} />
             <Route
               path="*"

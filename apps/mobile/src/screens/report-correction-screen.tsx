@@ -6,7 +6,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { Image } from 'expo-image';
 import {
   MAX_REPORT_CORRECTIONS,
+  OUTSIDE_PILOT_MESSAGE,
   canCorrectReport,
+  isInPilotArea,
   validateDraft,
   type CategoryId,
   type ReportLocation,
@@ -74,7 +76,11 @@ export function ReportCorrectionScreen() {
   const columns = formWidth >= 600 ? 4 : formWidth >= 380 ? 3 : 2;
   const problems = [
     ...validateDraft({ categoryId, description, landmark }),
-    ...(location ? [] : ['Confirm the report pin.']),
+    ...(location
+      ? isInPilotArea(location.latitude, location.longitude)
+        ? []
+        : [OUTSIDE_PILOT_MESSAGE]
+      : ['Confirm the report pin.']),
   ];
   const disabled = saving || !report;
   const remaining = report ? MAX_REPORT_CORRECTIONS - report.correctionCount - 1 : 0;

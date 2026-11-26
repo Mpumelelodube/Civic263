@@ -1,4 +1,5 @@
 import { isValidCoordinate } from './validation.ts';
+import { isInPilotArea, OUTSIDE_PILOT_MESSAGE } from './pilot.ts';
 
 export interface ReportLocation {
   latitude: number;
@@ -49,6 +50,16 @@ export function parseReportLocation(value: unknown): ReportLocation {
     source: data.source as ReportLocation['source'],
     ...(typeof data.placeId === 'string' ? { placeId: data.placeId } : {}),
   };
+}
+
+/**
+ * A pin for a new or corrected report: valid, and inside the pilot area. Saved drafts are read
+ * with parseReportLocation alone, so a draft pinned elsewhere stays readable and can be moved.
+ */
+export function parsePilotReportLocation(value: unknown): ReportLocation {
+  const location = parseReportLocation(value);
+  if (!isInPilotArea(location.latitude, location.longitude)) throw new Error(OUTSIDE_PILOT_MESSAGE);
+  return location;
 }
 
 export function parsePlaceLookup(value: unknown): PlaceLookupInput {

@@ -16,11 +16,14 @@ export function reportReadiness(input: {
   description: string;
   landmark: string;
   hasPin: boolean;
+  /** False when the pin lies outside the pilot area (Zimbabwe). */
+  pinInPilotArea?: boolean;
   photoCount: number;
 }): { items: ReadinessItem[]; ready: boolean } {
   const length = input.description.trim().length;
   const describedEnough = length >= 10 && length <= 1000;
-  const placed = input.landmark.trim().length > 0 && input.hasPin;
+  const outside = input.hasPin && input.pinInPilotArea === false;
+  const placed = input.landmark.trim().length > 0 && input.hasPin && !outside;
   const items: ReadinessItem[] = [
     {
       key: 'service',
@@ -48,9 +51,11 @@ export function reportReadiness(input: {
       label: 'Place',
       detail: placed
         ? 'Pin confirmed'
-        : input.landmark.trim()
-          ? 'Confirm a map pin'
-          : 'Search for a place or drop a pin',
+        : outside
+          ? 'Move the pin into Zimbabwe'
+          : input.landmark.trim()
+            ? 'Confirm a map pin'
+            : 'Search for a place or drop a pin',
       done: placed,
       optional: false,
     },
